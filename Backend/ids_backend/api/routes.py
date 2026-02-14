@@ -4,6 +4,12 @@ from datetime import datetime, timedelta
 from functools import wraps
 import logging
 
+try:
+    import requests as req_lib
+    HAS_REQUESTS = True
+except ImportError:
+    HAS_REQUESTS = False
+
 from models.alert import AlertLevel, AlertStatus, Alert
 from models.rule import DetectionRule, RuleAction
 from services.alert_service import AlertService
@@ -188,6 +194,157 @@ def inject_packet():
             'dst_ip': packet_data['dst_ip'],
             'protocol': packet_data['protocol']
         }
+    })
+
+
+# =============================================================================
+# VPC Flow Logs Ingestion (AWS)
+# =============================================================================
+
+_PROTOCOL_MAP = {6: 'tcp', 17: 'udp', 1: 'icmp'}
+
+
+def _flow_log_to_packet(record: dict) -> dict:
+    """Convert VPC Flow Log record to packet_data format for TrafficMonitor."""
+    protocol_num = record.get('protocol', 6)
+    protocol = _PROTOCOL_MAP.get(int(protocol_num) if protocol_num != '-' else 6, 'tcp')
+    src_port = int(record.get('srcport', 0)) if record.get('srcport', '-') != '-' else 0
+    dst_port = int(record.get('dstport', 0)) if record.get('dstport', '-') != '-' else 0
+    packets = int(record.get('packets', 1)) if record.get('packets', '-') != '-' else 1
+    bytes_val = int(record.get('bytes', 100)) if record.get('bytes', '-') != '-' else 100
+
+    return {
+        'src_ip': record.get('srcaddr', '0.0.0.0'),
+        'dst_ip': record.get('dstaddr', '0.0.0.0'),
+        'src_port': src_port,
+        'dst_port': dst_port,
+        'protocol': protocol,
+        'payload': b'',
+        'size': bytes_val,
+        'flags': {},
+        '_flow_packets': packets,
+    }
+
+
+@api.route('/attack/start', methods=['POST'])
+@handle_errors
+def start_attack():
+    """
+    Signal the attacker VM to start an attack.
+    Proxies the command to the attacker.
+
+    Request body:
+    - attackType: One of Port Scan, DDoS, Brute Force, SQL Injection, XSS, etc.
+    - attackerUrl: URL of attacker (e.g. http://10.0.1.100:9999)
+    - targetIp: (optional) Override target IP for the attacker. Defaults to this host.
+    """
+    if not HAS_REQUESTS:
+        return jsonify({'error': 'requests library required for attacker proxy', 'success': False}), 500
+
+    data = request.get_json()
+    if not data or 'attackType' not in data:
+        return jsonify({'error': 'attackType required', 'success': False}), 400
+
+    attack_type = data['attackType']
+    attacker_url = data.get('attackerUrl', '').strip()
+    target_ip = data.get('targetIp', '').strip()
+
+    if not attacker_url:
+        return jsonify({
+            'error': 'attackerUrl required. Configure the attacker IP in the Testing section.',
+            'success': False,
+        }), 400
+
+    # Ensure URL has scheme
+    if not attacker_url.startswith(('http://', 'https://')):
+        attacker_url = f"http://{attacker_url}"
+
+    # Build forward payload
+    payload = {'attackType': attack_type}
+    if target_ip:
+        payload['targetIp'] = target_ip
+
+    try:
+        r = req_lib.post(
+            f"{attacker_url.rstrip('/')}/attack/start",
+            json=payload,
+            timeout=10,
+            headers={'Content-Type': 'application/json'},
+        )
+        r.raise_for_status()
+        result = r.json()
+        return jsonify({'success': True, **result})
+    except req_lib.RequestException as e:
+        logger.warning(f"Attacker proxy failed: {e}")
+        return jsonify({
+            'success': False,
+            'message': f"Cannot reach attacker: {str(e)}. Ensure attacker VM is running and reachable.",
+        }), 502
+
+
+@api.route('/packets', methods=['GET'])
+@handle_errors
+def get_packets():
+    """Get recently processed packets (from traffic capture/inject)."""
+    if not traffic_monitor:
+        return jsonify([])
+    return jsonify(traffic_monitor.get_recent_packets())
+
+
+@api.route('/flow-logs/inject', methods=['POST'])
+@handle_errors
+def inject_flow_logs():
+    """
+    Inject VPC Flow Log records for analysis.
+    Accepts AWS VPC Flow Log format (parsed) as JSON.
+
+    Request body:
+    - records: List of flow log records. Each record can be:
+      - Object with fields: srcaddr, dstaddr, srcport, dstport, protocol, packets, bytes
+      - Or raw string (space-separated) which will be parsed
+
+    Used by Lambda/ingestion pipeline that reads from CloudWatch Logs or S3.
+    """
+    if not traffic_monitor:
+        return jsonify({'error': 'Traffic monitor not initialized'}), 500
+
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': 'Request body required'}), 400
+
+    records = data.get('records', data) if isinstance(data, dict) else []
+    if not isinstance(records, list):
+        records = [records]
+
+    injected = 0
+    for rec in records:
+        try:
+            if isinstance(rec, str):
+                parts = rec.split()
+                if len(parts) >= 12:
+                    rec = {
+                        'srcaddr': parts[3],
+                        'dstaddr': parts[4],
+                        'srcport': parts[5],
+                        'dstport': parts[6],
+                        'protocol': parts[7],
+                        'packets': parts[8],
+                        'bytes': parts[9],
+                    }
+                else:
+                    continue
+            packet_data = _flow_log_to_packet(rec)
+            for _ in range(packet_data.pop('_flow_packets', 1)):
+                traffic_monitor.inject_packet(packet_data)
+                injected += 1
+        except (KeyError, ValueError, TypeError) as e:
+            logger.warning(f"Skipping invalid flow log record: {e}")
+            continue
+
+    return jsonify({
+        'message': 'Flow logs ingested',
+        'injected': injected,
+        'records_processed': len(records),
     })
 
 

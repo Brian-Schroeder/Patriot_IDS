@@ -2,6 +2,7 @@ import logging
 import threading
 import queue
 from typing import Optional, Callable, Dict, Any, List
+from collections import deque
 from datetime import datetime
 from dataclasses import dataclass
 import time
@@ -62,6 +63,9 @@ class TrafficMonitor:
         
         # Packet capture callback (can be overridden for testing)
         self._capture_callback: Optional[Callable] = None
+
+        # Recent packets buffer for API exposure (last 200)
+        self._recent_packets: deque = deque(maxlen=200)
     
     def _capture_packets_scapy(self) -> None:
         """
@@ -313,10 +317,24 @@ class TrafficMonitor:
                     alerts.extend(rule_alerts)
                 
                 # Submit alerts
+                alert_types = []
                 for alert in alerts:
                     if self.alert_service.add_alert(alert):
                         self.stats.alerts_generated += 1
-                
+                        alert_types.append(alert.alert_type)
+
+                # Store in recent packets for API
+                self._recent_packets.append({
+                    'timestamp': packet_info.timestamp,
+                    'source_ip': packet_info.source_ip,
+                    'destination_ip': packet_info.destination_ip,
+                    'source_port': packet_info.source_port,
+                    'destination_port': packet_info.destination_port,
+                    'protocol': packet_info.protocol,
+                    'size': packet_info.size,
+                    'alert_types': alert_types,
+                })
+
                 self.packet_queue.task_done()
             
             except Exception as e:
@@ -397,6 +415,22 @@ class TrafficMonitor:
             }
         }
     
+    def get_recent_packets(self) -> List[Dict[str, Any]]:
+        """Get recently processed packets for API display."""
+        return [
+            {
+                'id': f"pkt-{i}-{p['timestamp'].strftime('%s')}",
+                'timestamp': p['timestamp'].isoformat(),
+                'sourceIp': p['source_ip'],
+                'destIp': p['destination_ip'],
+                'protocol': p['protocol'],
+                'port': p['destination_port'],
+                'size': p['size'],
+                'attackType': p['alert_types'][0] if p['alert_types'] else None,
+            }
+            for i, p in enumerate(reversed(list(self._recent_packets)))
+        ]
+
     def get_detection_stats(self) -> Dict[str, Any]:
         """Get detailed detection statistics"""
         stats = {

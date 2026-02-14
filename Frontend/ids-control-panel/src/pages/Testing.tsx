@@ -1,15 +1,36 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { startAttack, getReceivedPackets, ATTACK_TYPES, type AttackType } from '../api/attackerApi';
-import { FlaskConical, Play, CheckCircle, XCircle, Loader2, Inbox } from 'lucide-react';
+import { FlaskConical, Play, CheckCircle, XCircle, Loader2, Inbox, Server, Save } from 'lucide-react';
 import { format } from 'date-fns';
 
+const STORAGE_KEY_ATTACKER = 'ids_attacker_url';
+const STORAGE_KEY_TARGET = 'ids_target_ip';
+
 export function Testing() {
+  const [attackerUrl, setAttackerUrl] = useState('');
+  const [targetIp, setTargetIp] = useState('');
+  const [configSaved, setConfigSaved] = useState(false);
   const [selectedType, setSelectedType] = useState<AttackType | null>(null);
   const [lastResult, setLastResult] = useState<{ success: boolean; message?: string } | null>(null);
 
+  useEffect(() => {
+    setAttackerUrl(localStorage.getItem(STORAGE_KEY_ATTACKER) ?? '');
+    setTargetIp(localStorage.getItem(STORAGE_KEY_TARGET) ?? '');
+  }, []);
+
+  const saveConfig = () => {
+    if (attackerUrl.trim()) {
+      localStorage.setItem(STORAGE_KEY_ATTACKER, attackerUrl.trim());
+    }
+    localStorage.setItem(STORAGE_KEY_TARGET, targetIp.trim());
+    setConfigSaved(true);
+    setTimeout(() => setConfigSaved(false), 2000);
+  };
+
   const mutation = useMutation({
-    mutationFn: (attackType: AttackType) => startAttack(attackType),
+    mutationFn: (params: { attackType: AttackType; attackerUrl: string; targetIp?: string }) =>
+      startAttack(params.attackType, params.attackerUrl, params.targetIp || undefined),
     onSuccess: (data) => {
       setLastResult({
         success: data.success,
@@ -32,14 +53,88 @@ export function Testing() {
   });
 
   const handleStartAttack = (attackType: AttackType) => {
+    const url = (attackerUrl.trim() || localStorage.getItem(STORAGE_KEY_ATTACKER)) ?? '';
+    if (!url) {
+      setLastResult({
+        success: false,
+        message: 'Configure Attacker URL first. Enter the attacker VM IP (e.g. 10.0.1.100:9999).',
+      });
+      return;
+    }
+    const finalUrl = url.includes('://') ? url : `http://${url}`;
+    const finalTarget = (targetIp.trim() || localStorage.getItem(STORAGE_KEY_TARGET)) ?? undefined;
+
     setSelectedType(attackType);
     setLastResult(null);
-    mutation.mutate(attackType);
+    mutation.mutate({
+      attackType,
+      attackerUrl: finalUrl,
+      targetIp: finalTarget || undefined,
+    });
     refetchPackets();
   };
 
+  const isConfigured = Boolean(attackerUrl.trim() || localStorage.getItem(STORAGE_KEY_ATTACKER));
+
   return (
     <div className="space-y-8">
+      {/* Attacker Configuration */}
+      <div className="rounded-xl bg-[var(--ids-surface)] border border-[var(--ids-border)] p-6 shadow-sm">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="p-2 rounded-lg bg-blue-500/20">
+            <Server className="w-6 h-6 text-blue-400" />
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-[var(--ids-text)]">Attacker Configuration</h3>
+            <p className="text-sm text-[var(--ids-text-muted)]">
+              Configure the attacker VM so the defender can signal it to run tests
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-[var(--ids-text-muted)] mb-2">
+              Attacker URL
+            </label>
+            <input
+              type="text"
+              value={attackerUrl}
+              onChange={(e) => setAttackerUrl(e.target.value)}
+              placeholder="10.0.1.100:9999 or http://10.0.1.100:9999"
+              className="w-full px-4 py-2 rounded-lg bg-[var(--ids-bg)] border border-[var(--ids-border)] text-[var(--ids-text)] placeholder-[var(--ids-text-muted)] font-mono text-sm focus:outline-none focus:ring-2 focus:ring-[var(--ids-accent)]"
+            />
+            <p className="text-xs text-[var(--ids-text-muted)] mt-1">
+              IP and port of the attacker VM (run attacker_server.py on port 9999)
+            </p>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-[var(--ids-text-muted)] mb-2">
+              Target IP (Defender/Victim)
+            </label>
+            <input
+              type="text"
+              value={targetIp}
+              onChange={(e) => setTargetIp(e.target.value)}
+              placeholder="10.0.1.50"
+              className="w-full px-4 py-2 rounded-lg bg-[var(--ids-bg)] border border-[var(--ids-border)] text-[var(--ids-text)] placeholder-[var(--ids-text-muted)] font-mono text-sm focus:outline-none focus:ring-2 focus:ring-[var(--ids-accent)]"
+            />
+            <p className="text-xs text-[var(--ids-text-muted)] mt-1">
+              IP of the defender/IDS host the attacker will target (or set TARGET_IP on attacker)
+            </p>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={saveConfig}
+          className="mt-4 flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--ids-accent)]/20 text-[var(--ids-accent)] hover:bg-[var(--ids-accent)]/30 text-sm font-medium transition-colors"
+        >
+          <Save className="w-4 h-4" />
+          {configSaved ? 'Saved' : 'Save configuration'}
+        </button>
+      </div>
+
+      {/* Attack Testing */}
       <div className="rounded-xl bg-[var(--ids-surface)] border border-[var(--ids-border)] p-6 shadow-sm">
         <div className="flex items-center gap-3 mb-6">
           <div className="p-2 rounded-lg bg-amber-500/20">
@@ -53,6 +148,12 @@ export function Testing() {
           </div>
         </div>
 
+        {!isConfigured && (
+          <div className="mb-6 p-4 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-400 text-sm">
+            Configure the Attacker URL above before running tests.
+          </div>
+        )}
+
         <div className="space-y-4">
           <span className="text-sm font-medium text-[var(--ids-text-muted)]">Attack Type</span>
           <div className="flex flex-wrap gap-2">
@@ -61,7 +162,7 @@ export function Testing() {
                 key={type}
                 type="button"
                 onClick={() => handleStartAttack(type)}
-                disabled={mutation.isPending}
+                disabled={mutation.isPending || !isConfigured}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all disabled:opacity-60 disabled:cursor-not-allowed ${
                   selectedType === type
                     ? 'bg-[var(--ids-accent)]/20 text-[var(--ids-accent)] border border-[var(--ids-accent)]/50'
@@ -174,7 +275,9 @@ export function Testing() {
           <div className="flex flex-col items-center justify-center py-16 text-[var(--ids-text-muted)]">
             <Inbox className="w-12 h-12 mb-3 opacity-40" />
             <p className="text-sm">No packets received yet</p>
-            <p className="text-xs mt-1">Packets will appear here when an attack is active</p>
+            <p className="text-xs mt-1">
+              Packets will appear here when the traffic monitor captures attack traffic
+            </p>
           </div>
         )}
       </div>

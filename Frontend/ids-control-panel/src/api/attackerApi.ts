@@ -1,9 +1,9 @@
-/** Attack types that the attacker VM can execute */
+/** Attack types that the attacker VM can execute - aligned with IDS detection rules */
 export const ATTACK_TYPES = [
-  'SQL Injection',
   'Port Scan',
   'DDoS',
   'Brute Force',
+  'SQL Injection',
   'XSS',
   'Buffer Overflow',
   'DNS Tunneling',
@@ -12,7 +12,7 @@ export const ATTACK_TYPES = [
 
 export type AttackType = (typeof ATTACK_TYPES)[number];
 
-const API_BASE = import.meta.env.VITE_ATTACKER_API_URL ?? '/api';
+const API_BASE = import.meta.env.VITE_API_URL ?? import.meta.env.VITE_ATTACKER_API_URL ?? '/api/v1';
 
 export interface StartAttackResponse {
   success: boolean;
@@ -21,16 +21,30 @@ export interface StartAttackResponse {
   attackId?: string;
 }
 
+export interface StartAttackParams {
+  attackType: AttackType;
+  attackerUrl: string;
+  targetIp?: string;
+}
+
 /**
- * Signals the attacker VM to start an attack of the specified type.
- * Sends POST to /api/attack/start (or VITE_ATTACKER_API_URL if set).
+ * Signals the attacker VM to start an attack.
+ * Backend proxies the command to the attacker at attackerUrl.
  */
-export async function startAttack(attackType: AttackType): Promise<StartAttackResponse> {
+export async function startAttack(
+  attackType: AttackType,
+  attackerUrl: string,
+  targetIp?: string
+): Promise<StartAttackResponse> {
   const url = `${API_BASE.replace(/\/$/, '')}/attack/start`;
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ attackType }),
+    body: JSON.stringify({
+      attackType,
+      attackerUrl,
+      ...(targetIp && { targetIp }),
+    }),
   });
 
   if (!res.ok) {
@@ -58,7 +72,7 @@ export interface ReceivedPacket {
   attackType?: string;
 }
 
-/** Fetches packets being received (e.g. from attack stream). */
+/** Fetches packets received by the IDS (from traffic capture during attacks). */
 export async function getReceivedPackets(): Promise<ReceivedPacket[]> {
   try {
     const url = `${API_BASE.replace(/\/$/, '')}/packets`;

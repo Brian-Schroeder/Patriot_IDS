@@ -25,6 +25,8 @@ export function BoxPlot({ data, title }: BoxPlotProps) {
     margin: { t: 60, r: 40, b: 100, l: 60 },
     titlefont: { color: textColor, size: 16 },
     xaxis: {
+      title: 'Attack Type',
+      titlefont: { color: textColor },
       tickangle: -45,
       tickfont: { size: 11, color: textColor },
       gridcolor: gridColor,
@@ -47,12 +49,12 @@ export function BoxPlot({ data, title }: BoxPlotProps) {
   const config = { responsive: true, displayModeBar: true };
 
   return (
-    <div className="w-full h-full min-h-[300px]">
+    <div className="w-full h-full min-h-[450px]">
       <Plot
         data={boxData}
         layout={layout}
         config={config}
-        style={{ width: '100%', minHeight: 350 }}
+        style={{ width: '100%', minHeight: 420 }}
         useResizeHandler
       />
     </div>

@@ -18,6 +18,8 @@ export interface TrafficStats {
   totalPackets: number;
   alerts: number;
   bytes: number;
+  /** Per-bucket severity counts for mixed bar colors (low, medium, high, critical) */
+  severityCounts?: Record<string, number>;
 }
 
 export interface SeverityDistribution {

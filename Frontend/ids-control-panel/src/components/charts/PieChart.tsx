@@ -15,11 +15,11 @@ const SEVERITY_COLORS: Record<string, string> = {
 
 export function PieChartComponent({ data, title }: PieChartProps) {
   return (
-    <div className="w-full h-full min-h-[300px]">
+    <div className="w-full h-full min-h-[450px]">
       {title && (
         <h3 className="text-lg font-semibold mb-4 text-[var(--ids-text)]">{title}</h3>
       )}
-      <ResponsiveContainer width="100%" height="100%" minHeight={300}>
+      <ResponsiveContainer width="100%" height="100%" minHeight={400}>
         <RechartsPie>
           <Pie
             data={data}

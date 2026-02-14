@@ -21,7 +21,7 @@ export function ChartSelector() {
   const { chartType, timeRange, setChartType, setTimeRange } = useChartStore();
 
   return (
-    <div className="flex flex-wrap items-center gap-4 p-5 rounded-xl bg-[var(--ids-surface)] border border-[var(--ids-border)] shadow-sm">
+    <div className="flex flex-wrap items-center gap-4">
       <div className="flex items-center gap-2">
         <span className="text-sm text-[var(--ids-text-muted)]">Chart Type:</span>
         <div className="flex gap-1">

@@ -86,11 +86,17 @@ export function getTrafficStats(timeRange: TimeRange = '24h'): TrafficStats[] {
       (a) => { const t = new Date(a.timestamp); return t >= bucketStart && t < bucketEnd; }
     );
 
+    const severityCounts: Record<string, number> = { low: 0, medium: 0, high: 0, critical: 0 };
+    for (const a of alertsInBucket) {
+      severityCounts[a.severity]++;
+    }
+
     stats.push({
       hour: bucketSize >= 24 ? format(bucketStart, 'MMM d') : format(bucketStart, 'HH:mm'),
       totalPackets: Math.floor(10000 + Math.random() * 50000) + alertsInBucket.length * 100,
       alerts: alertsInBucket.length,
       bytes: Math.floor(1000000 + Math.random() * 10000000),
+      severityCounts,
     });
   }
 

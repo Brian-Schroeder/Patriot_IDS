@@ -1,4 +1,3 @@
-import { ChartSelector } from '../components/ChartSelector';
 import { VisualizationPanel } from '../components/VisualizationPanel';
 import { useQuery } from '@tanstack/react-query';
 import { mockAlerts } from '../api/mockData';
@@ -16,7 +15,6 @@ export function Dashboard() {
 
   return (
     <div className="space-y-8">
-      <ChartSelector />
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="rounded-xl bg-[var(--ids-surface)] border border-[var(--ids-border)] p-5 shadow-sm transition-shadow hover:shadow-md">
           <div className="flex items-center gap-3">

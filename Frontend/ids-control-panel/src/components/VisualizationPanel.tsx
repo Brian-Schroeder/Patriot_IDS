@@ -6,6 +6,7 @@ import {
   getAttackTypeStats,
   getFilteredAlerts,
 } from '../api/mockData';
+import { ChartSelector } from './ChartSelector';
 import { BarChart } from './charts/BarChart';
 import { LineChartComponent } from './charts/LineChart';
 import { DotPlot } from './charts/DotPlot';
@@ -53,6 +54,9 @@ export function VisualizationPanel() {
               dataKey="hour"
               valueKey="alerts"
               title="Alerts by Hour"
+              variant="alertsByHour"
+              xAxisLabel="Time"
+              yAxisLabel="Alerts"
             />
             <BarChart
               data={severityDist}
@@ -60,6 +64,8 @@ export function VisualizationPanel() {
               valueKey="count"
               title="Severity Distribution"
               variant="severity"
+              xAxisLabel="Severity"
+              yAxisLabel="Count"
             />
           </div>
         );
@@ -82,8 +88,13 @@ export function VisualizationPanel() {
   };
 
   return (
-    <div className="rounded-xl bg-[var(--ids-surface)] border border-[var(--ids-border)] p-6 shadow-sm">
-      {renderChart()}
+    <div className="rounded-xl bg-[var(--ids-surface)] border border-[var(--ids-border)] shadow-sm overflow-hidden">
+      <div className="p-5 border-b border-[var(--ids-border)]">
+        <ChartSelector />
+      </div>
+      <div className="p-6 min-h-[560px]">
+        {renderChart()}
+      </div>
     </div>
   );
 }

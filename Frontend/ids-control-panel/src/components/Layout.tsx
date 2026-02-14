@@ -1,4 +1,4 @@
-import { Shield, Activity, AlertTriangle } from 'lucide-react';
+import { Shield, Activity, AlertTriangle, FlaskConical, Bell } from 'lucide-react';
 import { Outlet, NavLink } from 'react-router-dom';
 
 export function Layout() {
@@ -40,6 +40,32 @@ export function Layout() {
           >
             <AlertTriangle size={18} />
             Alerts
+          </NavLink>
+          <NavLink
+            to="/testing"
+            className={({ isActive }) =>
+              `flex items-center gap-2 px-3 py-2 rounded-lg mt-1 font-medium ${
+                isActive
+                  ? 'text-[var(--ids-accent)] bg-[var(--ids-accent)]/10'
+                  : 'text-[var(--ids-text-muted)] hover:bg-[var(--ids-border)]/50 hover:text-[var(--ids-text)]'
+              }`
+            }
+          >
+            <FlaskConical size={18} />
+            Testing
+          </NavLink>
+          <NavLink
+            to="/notifications"
+            className={({ isActive }) =>
+              `flex items-center gap-2 px-3 py-2 rounded-lg mt-1 font-medium ${
+                isActive
+                  ? 'text-[var(--ids-accent)] bg-[var(--ids-accent)]/10'
+                  : 'text-[var(--ids-text-muted)] hover:bg-[var(--ids-border)]/50 hover:text-[var(--ids-text)]'
+              }`
+            }
+          >
+            <Bell size={18} />
+            Notification Center
           </NavLink>
         </nav>
         <div className="p-4 border-t border-[var(--ids-border)]">

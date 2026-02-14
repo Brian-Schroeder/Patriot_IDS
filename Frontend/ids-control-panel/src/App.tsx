@@ -3,6 +3,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Layout } from './components/Layout';
 import { Dashboard } from './pages/Dashboard';
 import { Alerts } from './pages/Alerts';
+import { Testing } from './pages/Testing';
+import { NotificationCenter } from './pages/NotificationCenter';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -20,6 +22,8 @@ function App() {
           <Route path="/" element={<Layout />}>
             <Route index element={<Dashboard />} />
             <Route path="alerts" element={<Alerts />} />
+            <Route path="testing" element={<Testing />} />
+            <Route path="notifications" element={<NotificationCenter />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>

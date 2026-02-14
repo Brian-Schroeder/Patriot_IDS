@@ -1,0 +1,23 @@
+services:
+  mongo:
+    image: mongo:6.0
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+      MONGO_INITDB_DATABASE: ids
+    volumes:
+      - ./data/db:/data/db
+      - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    ports:
+      - "27017:27017"
+
+  app:
+    build: .
+    env_file: .env
+    environment:
+      - MONGODB_URI=${MONGODB_URI}
+      - PORT=3000
+    ports:
+      - "3001:3000"
+    restart: unless-stopped

@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   ids-backend:
-    build:.
+    build: .
     container_name: ids-backend
     cap_add:
       - NET_ADMIN
@@ -22,8 +22,8 @@ services:
       - SMTP_FROM=${SMTP_FROM:-ids@example.com}
       - ALERT_EMAILS=${ALERT_EMAILS:-}
     volumes:
-      -./logs:/app/logs
-      -./data:/app/data
+      - ./logs:/app/logs
+      - ./data:/app/data
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/api/v1/health"]

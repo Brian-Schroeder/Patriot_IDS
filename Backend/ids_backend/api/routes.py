@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, Response
-from typing import Optional
+from typing import Dict, Optional
 from datetime import datetime, timedelta
 from functools import wraps
 import logging

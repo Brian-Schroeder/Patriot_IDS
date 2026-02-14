@@ -6,12 +6,12 @@ interface PieChartProps {
   title?: string;
 }
 
-const COLORS = [
-  'var(--ids-accent)',
-  'var(--ids-warn)',
-  '#f97316',
-  'var(--ids-danger)',
-];
+const SEVERITY_COLORS: Record<string, string> = {
+  low: 'var(--ids-severity-low)',
+  medium: 'var(--ids-severity-medium)',
+  high: 'var(--ids-severity-high)',
+  critical: 'var(--ids-severity-critical)',
+};
 
 export function PieChartComponent({ data, title }: PieChartProps) {
   return (
@@ -30,8 +30,11 @@ export function PieChartComponent({ data, title }: PieChartProps) {
             outerRadius={100}
             label={({ name, value }) => `${name}: ${value}`}
           >
-            {data.map((_, index) => (
-              <Cell key={index} fill={COLORS[index % COLORS.length]} />
+            {data.map((entry, index) => (
+              <Cell
+                key={index}
+                fill={SEVERITY_COLORS[entry.severity] ?? 'var(--ids-accent)'}
+              />
             ))}
           </Pie>
           <Tooltip
@@ -39,9 +42,32 @@ export function PieChartComponent({ data, title }: PieChartProps) {
               backgroundColor: 'var(--ids-surface)',
               border: '1px solid var(--ids-border)',
               borderRadius: '8px',
+              color: 'var(--ids-text)',
             }}
+            itemStyle={{ color: 'var(--ids-text)' }}
+            labelStyle={{ color: 'var(--ids-text)' }}
+            content={({ active, payload }) =>
+              active && payload?.[0] ? (
+                <div
+                  className="px-3 py-2 rounded-lg border border-[var(--ids-border)]"
+                  style={{
+                    backgroundColor: 'var(--ids-surface)',
+                    color: 'var(--ids-text)',
+                  }}
+                >
+                  <div className="font-medium">
+                    {payload[0].name}: {payload[0].value}
+                  </div>
+                  {payload[0].payload && (
+                    <div className="text-sm text-[var(--ids-text-muted)] mt-0.5">
+                      {payload[0].payload.severity} severity
+                    </div>
+                  )}
+                </div>
+              ) : null
+            }
           />
-          <Legend />
+          <Legend wrapperStyle={{ color: 'var(--ids-text)' }} />
         </RechartsPie>
       </ResponsiveContainer>
     </div>

@@ -15,20 +15,31 @@ export function BoxPlot({ data, title }: BoxPlotProps) {
     line: { color: '#00d4aa' },
   }));
 
+  const textColor = '#e2e8f0';
+  const gridColor = '#1e2a42';
   const layout = {
     title: title ?? 'Packet Distribution by Attack Type',
     paper_bgcolor: 'transparent',
     plot_bgcolor: 'transparent',
-    font: { color: 'var(--ids-text)', family: 'JetBrains Mono, monospace' },
+    font: { color: textColor, family: 'JetBrains Mono, monospace', size: 12 },
     margin: { t: 60, r: 40, b: 100, l: 60 },
+    titlefont: { color: textColor, size: 16 },
     xaxis: {
       tickangle: -45,
-      tickfont: { size: 10 },
-      gridcolor: 'var(--ids-border)',
+      tickfont: { size: 11, color: textColor },
+      gridcolor: gridColor,
+      zerolinecolor: gridColor,
+      linecolor: gridColor,
+      color: textColor,
     },
     yaxis: {
       title: 'Packets',
-      gridcolor: 'var(--ids-border)',
+      titlefont: { color: textColor },
+      tickfont: { size: 11, color: textColor },
+      gridcolor: gridColor,
+      zerolinecolor: gridColor,
+      linecolor: gridColor,
+      color: textColor,
     },
     showlegend: false,
   };

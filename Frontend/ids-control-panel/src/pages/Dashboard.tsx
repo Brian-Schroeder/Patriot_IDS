@@ -18,7 +18,7 @@ export function Dashboard() {
     <div className="space-y-8">
       <ChartSelector />
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="rounded-lg bg-[var(--ids-surface)] border border-[var(--ids-border)] p-5">
+        <div className="rounded-xl bg-[var(--ids-surface)] border border-[var(--ids-border)] p-5 shadow-sm transition-shadow hover:shadow-md">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-[var(--ids-accent)]/20">
               <Activity className="w-5 h-5 text-[var(--ids-accent)]" />
@@ -29,7 +29,7 @@ export function Dashboard() {
             </div>
           </div>
         </div>
-        <div className="rounded-lg bg-[var(--ids-surface)] border border-[var(--ids-border)] p-5">
+        <div className="rounded-xl bg-[var(--ids-surface)] border border-[var(--ids-border)] p-5 shadow-sm transition-shadow hover:shadow-md">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-[var(--ids-warn)]/20">
               <AlertTriangle className="w-5 h-5 text-[var(--ids-warn)]" />
@@ -40,7 +40,7 @@ export function Dashboard() {
             </div>
           </div>
         </div>
-        <div className="rounded-lg bg-[var(--ids-surface)] border border-[var(--ids-border)] p-5">
+        <div className="rounded-xl bg-[var(--ids-surface)] border border-[var(--ids-border)] p-5 shadow-sm transition-shadow hover:shadow-md">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-[var(--ids-danger)]/20">
               <ShieldCheck className="w-5 h-5 text-[var(--ids-danger)]" />
@@ -56,7 +56,7 @@ export function Dashboard() {
       <VisualizationPanel />
 
       {alerts && alerts.length > 0 && (
-        <div className="rounded-lg bg-[var(--ids-surface)] border border-[var(--ids-border)] overflow-hidden">
+        <div className="rounded-xl bg-[var(--ids-surface)] border border-[var(--ids-border)] overflow-hidden shadow-sm">
           <h3 className="px-6 py-4 text-lg font-semibold border-b border-[var(--ids-border)]">
             Recent Alerts
           </h3>

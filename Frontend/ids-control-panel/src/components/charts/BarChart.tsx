@@ -6,19 +6,34 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  Cell,
 } from 'recharts';
 import type { TrafficStats, SeverityDistribution, AttackTypeStats } from '../../types';
 
 type BarChartData = TrafficStats | SeverityDistribution | AttackTypeStats;
+
+const SEVERITY_COLORS: Record<string, string> = {
+  low: 'var(--ids-severity-low)',
+  medium: 'var(--ids-severity-medium)',
+  high: 'var(--ids-severity-high)',
+  critical: 'var(--ids-severity-critical)',
+};
 
 interface BarChartProps {
   data: BarChartData[];
   dataKey: string;
   valueKey: string;
   title?: string;
+  variant?: 'default' | 'severity';
 }
 
-export function BarChart({ data, dataKey, valueKey, title }: BarChartProps) {
+export function BarChart({ data, dataKey, valueKey, title, variant = 'default' }: BarChartProps) {
+  const getBarFill = (entry: BarChartData): string => {
+    if (variant !== 'severity') return 'var(--ids-accent)';
+    const val = (entry as unknown as Record<string, unknown>)[dataKey];
+    return (val ? SEVERITY_COLORS[String(val)] : null) ?? 'var(--ids-accent)';
+  };
+
   return (
     <div className="w-full h-full min-h-[300px]">
       {title && (
@@ -41,10 +56,19 @@ export function BarChart({ data, dataKey, valueKey, title }: BarChartProps) {
               backgroundColor: 'var(--ids-surface)',
               border: '1px solid var(--ids-border)',
               borderRadius: '8px',
+              color: 'var(--ids-text)',
             }}
             labelStyle={{ color: 'var(--ids-text)' }}
           />
-          <Bar dataKey={valueKey} fill="var(--ids-accent)" radius={[4, 4, 0, 0]} />
+          <Bar
+            dataKey={valueKey}
+            radius={[4, 4, 0, 0]}
+            activeBar={{ fill: 'rgba(0, 212, 170, 0.4)', stroke: 'var(--ids-accent)', strokeWidth: 1 }}
+          >
+            {data.map((entry, index) => (
+              <Cell key={index} fill={getBarFill(entry)} />
+            ))}
+          </Bar>
         </RechartsBar>
       </ResponsiveContainer>
     </div>

@@ -21,7 +21,7 @@ export function ChartSelector() {
   const { chartType, timeRange, setChartType, setTimeRange } = useChartStore();
 
   return (
-    <div className="flex flex-wrap items-center gap-4 p-4 rounded-lg bg-[var(--ids-surface)] border border-[var(--ids-border)]">
+    <div className="flex flex-wrap items-center gap-4 p-5 rounded-xl bg-[var(--ids-surface)] border border-[var(--ids-border)] shadow-sm">
       <div className="flex items-center gap-2">
         <span className="text-sm text-[var(--ids-text-muted)]">Chart Type:</span>
         <div className="flex gap-1">
@@ -29,10 +29,10 @@ export function ChartSelector() {
             <button
               key={type}
               onClick={() => setChartType(type)}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded text-sm font-medium transition-colors ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 chartType === type
-                  ? 'bg-[var(--ids-accent)] text-[var(--ids-bg)]'
-                  : 'bg-[var(--ids-border)]/50 text-[var(--ids-text-muted)] hover:bg-[var(--ids-border)] hover:text-[var(--ids-text)]'
+                  ? 'bg-[var(--ids-accent)] text-[var(--ids-bg)] shadow-sm'
+                  : 'bg-[var(--ids-border)]/30 text-[var(--ids-text-muted)] hover:bg-[var(--ids-border)]/60 hover:text-[var(--ids-text)]'
               }`}
             >
               {icon}
@@ -47,7 +47,7 @@ export function ChartSelector() {
         <select
           value={timeRange}
           onChange={(e) => setTimeRange(e.target.value as typeof timeRange)}
-          className="px-3 py-1.5 rounded bg-[var(--ids-border)] border border-[var(--ids-border)] text-[var(--ids-text)] font-medium text-sm focus:outline-none focus:ring-2 focus:ring-[var(--ids-accent)]"
+          className="px-4 py-2 rounded-lg bg-[var(--ids-surface)] border border-[var(--ids-border)] text-[var(--ids-text)] font-medium text-sm focus:outline-none focus:ring-2 focus:ring-[var(--ids-accent)] focus:border-transparent cursor-pointer"
         >
           {timeOptions.map(({ range, label }) => (
             <option key={range} value={range}>

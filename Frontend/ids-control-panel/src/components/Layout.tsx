@@ -4,7 +4,7 @@ import { Outlet, NavLink } from 'react-router-dom';
 export function Layout() {
   return (
     <div className="flex min-h-screen">
-      <aside className="w-56 flex-shrink-0 bg-[var(--ids-surface)] border-r border-[var(--ids-border)] flex flex-col">
+      <aside className="w-56 flex-shrink-0 bg-[var(--ids-surface)] border-r border-[var(--ids-border)] flex flex-col shadow-sm">
         <div className="p-6 border-b border-[var(--ids-border)]">
           <div className="flex items-center gap-3">
             <Shield className="w-8 h-8 text-[var(--ids-accent)]" />

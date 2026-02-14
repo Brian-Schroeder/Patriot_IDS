@@ -1,6 +1,28 @@
 import type { IntrusionAlert, TrafficStats, SeverityDistribution, AttackTypeStats } from '../types';
 import { subHours, format } from 'date-fns';
 
+export type TimeRange = '1h' | '6h' | '24h' | '7d';
+
+function getTimeRangeHours(range: TimeRange): number {
+  switch (range) {
+    case '1h': return 1;
+    case '6h': return 6;
+    case '24h': return 24;
+    case '7d': return 24 * 7;
+    default: return 24;
+  }
+}
+
+function filterAlertsByTimeRange(alerts: IntrusionAlert[], range: TimeRange): IntrusionAlert[] {
+  const hours = getTimeRangeHours(range);
+  const cutoff = subHours(new Date(), hours);
+  return alerts.filter((a) => new Date(a.timestamp) >= cutoff);
+}
+
+export function getFilteredAlerts(timeRange: TimeRange = '24h'): IntrusionAlert[] {
+  return filterAlertsByTimeRange(mockAlerts, timeRange);
+}
+
 const attackTypes = [
   'SQL Injection',
   'Port Scan',
@@ -49,20 +71,25 @@ function generateAlerts(count: number): IntrusionAlert[] {
 
 export const mockAlerts = generateAlerts(200);
 
-export function getTrafficStats(): TrafficStats[] {
+export function getTrafficStats(timeRange: TimeRange = '24h'): TrafficStats[] {
   const now = new Date();
+  const hours = getTimeRangeHours(timeRange);
+  const bucketCount = Math.min(hours, 24);
+  const bucketSize = hours / bucketCount;
   const stats: TrafficStats[] = [];
+  const filteredAlerts = filterAlertsByTimeRange(mockAlerts, timeRange);
 
-  for (let i = 23; i >= 0; i--) {
-    const hour = subHours(now, i);
-    const alertsInHour = mockAlerts.filter(
-      (a) => new Date(a.timestamp) >= hour && new Date(a.timestamp) < subHours(hour, -1)
+  for (let i = bucketCount - 1; i >= 0; i--) {
+    const bucketStart = subHours(now, (i + 1) * bucketSize);
+    const bucketEnd = subHours(now, i * bucketSize);
+    const alertsInBucket = filteredAlerts.filter(
+      (a) => { const t = new Date(a.timestamp); return t >= bucketStart && t < bucketEnd; }
     );
 
     stats.push({
-      hour: format(hour, 'HH:mm'),
-      totalPackets: Math.floor(10000 + Math.random() * 50000) + alertsInHour.length * 100,
-      alerts: alertsInHour.length,
+      hour: bucketSize >= 24 ? format(bucketStart, 'MMM d') : format(bucketStart, 'HH:mm'),
+      totalPackets: Math.floor(10000 + Math.random() * 50000) + alertsInBucket.length * 100,
+      alerts: alertsInBucket.length,
       bytes: Math.floor(1000000 + Math.random() * 10000000),
     });
   }
@@ -70,10 +97,11 @@ export function getTrafficStats(): TrafficStats[] {
   return stats;
 }
 
-export function getSeverityDistribution(): SeverityDistribution[] {
+export function getSeverityDistribution(timeRange: TimeRange = '24h'): SeverityDistribution[] {
+  const filteredAlerts = filterAlertsByTimeRange(mockAlerts, timeRange);
   const counts = severities.reduce(
     (acc, s) => {
-      acc[s] = mockAlerts.filter((a) => a.severity === s).length;
+      acc[s] = filteredAlerts.filter((a) => a.severity === s).length;
       return acc;
     },
     {} as Record<string, number>
@@ -82,10 +110,11 @@ export function getSeverityDistribution(): SeverityDistribution[] {
   return Object.entries(counts).map(([severity, count]) => ({ severity, count }));
 }
 
-export function getAttackTypeStats(): AttackTypeStats[] {
+export function getAttackTypeStats(timeRange: TimeRange = '24h'): AttackTypeStats[] {
+  const filteredAlerts = filterAlertsByTimeRange(mockAlerts, timeRange);
   const byType = new Map<string, IntrusionAlert[]>();
 
-  for (const alert of mockAlerts) {
+  for (const alert of filteredAlerts) {
     const arr = byType.get(alert.attackType) ?? [];
     arr.push(alert);
     byType.set(alert.attackType, arr);

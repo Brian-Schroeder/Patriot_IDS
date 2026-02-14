@@ -4,7 +4,7 @@ import {
   getTrafficStats,
   getSeverityDistribution,
   getAttackTypeStats,
-  mockAlerts,
+  getFilteredAlerts,
 } from '../api/mockData';
 import { BarChart } from './charts/BarChart';
 import { LineChartComponent } from './charts/LineChart';
@@ -13,24 +13,29 @@ import { BoxPlot } from './charts/BoxPlot';
 import { PieChartComponent } from './charts/PieChart';
 
 export function VisualizationPanel() {
-  const { chartType } = useChartStore();
+  const { chartType, timeRange } = useChartStore();
 
   const { data: trafficStats } = useQuery({
-    queryKey: ['trafficStats'],
-    queryFn: getTrafficStats,
+    queryKey: ['trafficStats', timeRange],
+    queryFn: () => getTrafficStats(timeRange),
   });
 
   const { data: severityDist } = useQuery({
-    queryKey: ['severityDistribution'],
-    queryFn: getSeverityDistribution,
+    queryKey: ['severityDistribution', timeRange],
+    queryFn: () => getSeverityDistribution(timeRange),
   });
 
   const { data: attackTypeStats } = useQuery({
-    queryKey: ['attackTypeStats'],
-    queryFn: getAttackTypeStats,
+    queryKey: ['attackTypeStats', timeRange],
+    queryFn: () => getAttackTypeStats(timeRange),
   });
 
-  if (!trafficStats || !severityDist || !attackTypeStats) {
+  const { data: filteredAlerts } = useQuery({
+    queryKey: ['filteredAlerts', timeRange],
+    queryFn: () => getFilteredAlerts(timeRange),
+  });
+
+  if (!trafficStats || !severityDist || !attackTypeStats || !filteredAlerts) {
     return (
       <div className="flex items-center justify-center h-64 text-[var(--ids-text-muted)]">
         Loading visualization data...
@@ -54,13 +59,14 @@ export function VisualizationPanel() {
               dataKey="severity"
               valueKey="count"
               title="Severity Distribution"
+              variant="severity"
             />
           </div>
         );
       case 'line':
         return <LineChartComponent data={trafficStats} title="Traffic & Alerts Over Time" />;
       case 'dotplot':
-        return <DotPlot data={mockAlerts} title="Alerts: Packets vs Time" />;
+        return <DotPlot data={filteredAlerts} title="Alerts: Packets vs Time" />;
       case 'boxplot':
         return (
           <BoxPlot
@@ -76,7 +82,7 @@ export function VisualizationPanel() {
   };
 
   return (
-    <div className="rounded-lg bg-[var(--ids-surface)] border border-[var(--ids-border)] p-6">
+    <div className="rounded-xl bg-[var(--ids-surface)] border border-[var(--ids-border)] p-6 shadow-sm">
       {renderChart()}
     </div>
   );

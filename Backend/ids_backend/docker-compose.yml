@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  ids-backend:
+    build:.
+    container_name: ids-backend
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    network_mode: host
+    environment:
+      - IDS_HOST=0.0.0.0
+      - IDS_PORT=5000
+      - IDS_DEBUG=false
+      - NETWORK_INTERFACE=eth0
+      - WEBHOOK_URL=${WEBHOOK_URL:-}
+      - SLACK_WEBHOOK_URL=${SLACK_WEBHOOK_URL:-}
+      - SMTP_HOST=${SMTP_HOST:-}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USERNAME=${SMTP_USERNAME:-}
+      - SMTP_PASSWORD=${SMTP_PASSWORD:-}
+      - SMTP_FROM=${SMTP_FROM:-ids@example.com}
+      - ALERT_EMAILS=${ALERT_EMAILS:-}
+    volumes:
+      -./logs:/app/logs
+      -./data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Optional: Redis for distributed deployments
+  # redis:
+  #   image: redis:7-alpine
+  #   container_name: ids-redis
+  #   ports:
+  #     - "6379:6379"
+  #   volumes:
+  #     - redis-data:/data
+
+volumes:
+  redis-data:

@@ -8,6 +8,10 @@ scapy>=2.5.0
 # HTTP Requests (for notifications)
 requests>=2.31.0
 
+# ML Anomaly Detection
+scikit-learn>=1.3.0
+numpy>=1.24.0
+
 # Production Server
 gunicorn>=21.0.0
 

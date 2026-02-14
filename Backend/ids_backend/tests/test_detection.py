@@ -330,8 +330,8 @@ class TestAnomalyDetector:
             packet = self._create_packet(src_ip=src_ip, dst_port=80)
             alerts.extend(self.detector.analyze(packet))
         
-        # Should detect connection flood
-        flood_alerts = [a for a in alerts if 'CONNECTION_FLOOD' in a.alert_type]
+        # Should detect connection flood (classifier maps to DDoS)
+        flood_alerts = [a for a in alerts if 'DDoS' in a.alert_type or 'CONNECTION_FLOOD' in a.metadata.get('anomaly_type', '')]
         assert len(flood_alerts) > 0
     
     def test_port_scan_detection(self):
@@ -343,8 +343,8 @@ class TestAnomalyDetector:
             packet = self._create_packet(src_ip=src_ip, dst_port=port)
             alerts.extend(self.detector.analyze(packet))
         
-        # Should detect port scan
-        scan_alerts = [a for a in alerts if 'PORT_SCAN' in a.alert_type]
+        # Should detect port scan (classifier maps to Port Scan)
+        scan_alerts = [a for a in alerts if 'Port Scan' in a.alert_type or 'PORT_SCAN' in a.metadata.get('anomaly_type', '')]
         assert len(scan_alerts) > 0
     
     def test_syn_flood_detection(self):
@@ -366,8 +366,8 @@ class TestAnomalyDetector:
             )
             alerts.extend(self.detector.analyze(packet))
         
-        # Should detect SYN flood
-        syn_alerts = [a for a in alerts if 'SYN_FLOOD' in a.alert_type]
+        # Should detect SYN flood (classifier maps to DDoS)
+        syn_alerts = [a for a in alerts if 'DDoS' in a.alert_type or 'SYN_FLOOD' in a.metadata.get('anomaly_type', '')]
         assert len(syn_alerts) > 0
     
     def test_brute_force_detection(self):
@@ -381,8 +381,8 @@ class TestAnomalyDetector:
         packet = self._create_packet(src_ip=src_ip)
         alerts = self.detector.analyze(packet)
         
-        # Should detect brute force
-        brute_alerts = [a for a in alerts if 'BRUTE_FORCE' in a.alert_type]
+        # Should detect brute force (classifier maps to Brute Force)
+        brute_alerts = [a for a in alerts if 'Brute Force' in a.alert_type or 'BRUTE_FORCE' in a.metadata.get('anomaly_type', '')]
         assert len(brute_alerts) > 0
     
     def test_normal_traffic_no_alerts(self):
@@ -440,7 +440,7 @@ class TestAnomalyDetector:
                 alerts.extend(self.detector.analyze(packet))
         
         # Should not trigger connection flood (threshold is 10 per IP)
-        flood_alerts = [a for a in alerts if 'CONNECTION_FLOOD' in a.alert_type]
+        flood_alerts = [a for a in alerts if 'CONNECTION_FLOOD' in a.metadata.get('anomaly_type', '') or 'DDoS' in a.alert_type]
         assert len(flood_alerts) == 0
     
     def test_baseline_learning(self):
@@ -587,8 +587,8 @@ class TestIntegration:
         packet_info = self.analyzer.analyze(packet_data)
         all_alerts.extend(self.rule_engine.evaluate(packet_info))
         
-        # Should have both scan and SQL injection alerts
-        scan_alerts = [a for a in all_alerts if 'SCAN' in a.alert_type]
+        # Should have both scan and SQL injection alerts (scan from classifier -> Port Scan)
+        scan_alerts = [a for a in all_alerts if 'Port Scan' in a.alert_type or 'PORT_SCAN' in a.metadata.get('anomaly_type', '')]
         sqli_alerts = [a for a in all_alerts if 'SQL' in a.alert_type]
         
         assert len(scan_alerts) > 0, "Should detect port scan"

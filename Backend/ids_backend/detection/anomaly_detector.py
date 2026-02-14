@@ -7,6 +7,7 @@ import logging
 
 from models.alert import Alert, AlertLevel
 from detection.packet_analyzer import PacketInfo
+from detection.anomaly_classifier import AnomalyEvent
 
 logger = logging.getLogger(__name__)
 
@@ -149,94 +150,102 @@ class AnomalyDetector:
         """Record a failed authentication attempt"""
         self.failed_auth_tracker[source_ip].append(datetime.utcnow())
     
-    def analyze(self, packet: PacketInfo) -> List[Alert]:
-        """Analyze packet and traffic patterns for anomalies"""
-        alerts = []
+    def detect_anomalies(self, packet: PacketInfo) -> List[AnomalyEvent]:
+        """Detect anomalies and return raw anomaly events for classification"""
+        anomalies: List[AnomalyEvent] = []
         now = packet.timestamp
         source_ip = packet.source_ip
-        
+
         # Record the packet first
         self.record_packet(packet)
-        
+
         # 1. Check for traffic volume anomalies
-        volume_alert = self._check_volume_anomaly(now)
-        if volume_alert:
-            alerts.append(volume_alert)
-        
+        vol = self._check_volume_anomaly(now)
+        if vol:
+            anomalies.append(vol)
+
         # 2. Check for connection flood from single IP
-        conn_alert = self._check_connection_flood(source_ip)
-        if conn_alert:
-            alerts.append(conn_alert)
-        
+        conn = self._check_connection_flood(source_ip)
+        if conn:
+            anomalies.append(conn)
+
         # 3. Check for port scanning
-        scan_alert = self._check_port_scan(source_ip)
-        if scan_alert:
-            alerts.append(scan_alert)
-        
+        scan = self._check_port_scan(source_ip)
+        if scan:
+            anomalies.append(scan)
+
         # 4. Check for SYN flood
-        syn_alert = self._check_syn_flood(source_ip)
-        if syn_alert:
-            alerts.append(syn_alert)
-        
+        syn = self._check_syn_flood(source_ip)
+        if syn:
+            anomalies.append(syn)
+
         # 5. Check for brute force (failed auth)
-        brute_alert = self._check_brute_force(source_ip)
-        if brute_alert:
-            alerts.append(brute_alert)
-        
-        return alerts
+        brute = self._check_brute_force(source_ip)
+        if brute:
+            anomalies.append(brute)
+
+        return anomalies
+
+    def analyze(self, packet: PacketInfo) -> List[Alert]:
+        """Legacy: Analyze and return alerts. Use detect_anomalies + classifier for pipeline."""
+        from detection.anomaly_classifier import AnomalyClassifier
+        anomalies = self.detect_anomalies(packet)
+        classifier = AnomalyClassifier()
+        return classifier.classify_batch(anomalies, packet)
     
-    def _check_volume_anomaly(self, current_time: datetime) -> Optional[Alert]:
+    def _check_volume_anomaly(self, current_time: datetime) -> Optional[AnomalyEvent]:
         """Detect abnormal traffic volume"""
         if len(self.packet_timestamps) < 10:
             return None
-        
+
         window_seconds = self.time_window.total_seconds()
         current_pps = len(self.packet_timestamps) / window_seconds
-        
+
         # Check against absolute threshold
         if current_pps > self.thresholds['packets_per_second']:
-            return Alert(
-                alert_type="ANOMALY:HIGH_TRAFFIC_VOLUME",
+            return AnomalyEvent(
+                anomaly_type="ANOMALY:HIGH_TRAFFIC_VOLUME",
                 source_ip="multiple",
+                timestamp=current_time,
                 description=f"Abnormally high traffic: {current_pps:.2f} packets/sec (threshold: {self.thresholds['packets_per_second']})",
-                level=AlertLevel.HIGH,
-                metadata={
+                suggested_severity="HIGH",
+                features={
                     'packets_per_second': current_pps,
                     'threshold': self.thresholds['packets_per_second'],
                     'baseline_avg': self.baseline.avg_packets_per_second
                 }
             )
-        
+
         # Check against baseline (statistical anomaly)
         if self.baseline.sample_count > 100 and self.baseline.std_packets_per_second > 0:
             z_score = (current_pps - self.baseline.avg_packets_per_second) / self.baseline.std_packets_per_second
             if z_score > self.thresholds['std_deviation_multiplier']:
-                return Alert(
-                    alert_type="ANOMALY:TRAFFIC_SPIKE",
+                return AnomalyEvent(
+                    anomaly_type="ANOMALY:TRAFFIC_SPIKE",
                     source_ip="multiple",
+                    timestamp=current_time,
                     description=f"Traffic spike detected: {z_score:.2f} standard deviations above baseline",
-                    level=AlertLevel.MEDIUM,
-                    metadata={
+                    suggested_severity="MEDIUM",
+                    features={
                         'z_score': z_score,
                         'current_pps': current_pps,
                         'baseline_avg': self.baseline.avg_packets_per_second,
                         'baseline_std': self.baseline.std_packets_per_second
                     }
                 )
-        
         return None
     
-    def _check_connection_flood(self, source_ip: str) -> Optional[Alert]:
+    def _check_connection_flood(self, source_ip: str) -> Optional[AnomalyEvent]:
         """Detect connection flood from single IP"""
         connection_count = len(self.connection_tracker.get(source_ip, []))
-        
         if connection_count > self.thresholds['connections_per_ip']:
-            return Alert(
-                alert_type="ANOMALY:CONNECTION_FLOOD",
+            return AnomalyEvent(
+                anomaly_type="ANOMALY:CONNECTION_FLOOD",
                 source_ip=source_ip,
+                timestamp=datetime.utcnow(),
                 description=f"Excessive connections from single IP: {connection_count} in {self.time_window.total_seconds()}s",
-                level=AlertLevel.HIGH,
-                metadata={
+                suggested_severity="HIGH",
+                features={
                     'connection_count': connection_count,
                     'threshold': self.thresholds['connections_per_ip'],
                     'time_window_seconds': self.time_window.total_seconds()
@@ -244,52 +253,52 @@ class AnomalyDetector:
             )
         return None
     
-    def _check_port_scan(self, source_ip: str) -> Optional[Alert]:
+    def _check_port_scan(self, source_ip: str) -> Optional[AnomalyEvent]:
         """Detect port scanning activity"""
         ports_scanned = len(self.port_scan_tracker.get(source_ip, set()))
-        
         if ports_scanned > self.thresholds['port_scan_threshold']:
-            return Alert(
-                alert_type="ANOMALY:PORT_SCAN",
+            return AnomalyEvent(
+                anomaly_type="ANOMALY:PORT_SCAN",
                 source_ip=source_ip,
+                timestamp=datetime.utcnow(),
                 description=f"Port scan detected: {ports_scanned} unique ports accessed",
-                level=AlertLevel.MEDIUM,
-                metadata={
+                suggested_severity="MEDIUM",
+                features={
                     'ports_scanned': ports_scanned,
-                    'ports': list(self.port_scan_tracker[source_ip])[:50],  # First 50
+                    'ports': list(self.port_scan_tracker[source_ip])[:50],
                     'threshold': self.thresholds['port_scan_threshold']
                 }
             )
         return None
     
-    def _check_syn_flood(self, source_ip: str) -> Optional[Alert]:
+    def _check_syn_flood(self, source_ip: str) -> Optional[AnomalyEvent]:
         """Detect SYN flood attack"""
         syn_count = len(self.syn_tracker.get(source_ip, []))
-        
         if syn_count > self.thresholds['syn_flood_threshold']:
-            return Alert(
-                alert_type="ANOMALY:SYN_FLOOD",
+            return AnomalyEvent(
+                anomaly_type="ANOMALY:SYN_FLOOD",
                 source_ip=source_ip,
+                timestamp=datetime.utcnow(),
                 description=f"Potential SYN flood: {syn_count} SYN packets in {self.time_window.total_seconds()}s",
-                level=AlertLevel.CRITICAL,
-                metadata={
+                suggested_severity="CRITICAL",
+                features={
                     'syn_count': syn_count,
                     'threshold': self.thresholds['syn_flood_threshold']
                 }
             )
         return None
     
-    def _check_brute_force(self, source_ip: str) -> Optional[Alert]:
+    def _check_brute_force(self, source_ip: str) -> Optional[AnomalyEvent]:
         """Detect brute force authentication attempts"""
         failed_count = len(self.failed_auth_tracker.get(source_ip, []))
-        
         if failed_count > self.thresholds['failed_auth_threshold']:
-            return Alert(
-                alert_type="ANOMALY:BRUTE_FORCE",
+            return AnomalyEvent(
+                anomaly_type="ANOMALY:BRUTE_FORCE",
                 source_ip=source_ip,
+                timestamp=datetime.utcnow(),
                 description=f"Brute force attempt: {failed_count} failed authentications",
-                level=AlertLevel.HIGH,
-                metadata={
+                suggested_severity="HIGH",
+                features={
                     'failed_attempts': failed_count,
                     'threshold': self.thresholds['failed_auth_threshold']
                 }

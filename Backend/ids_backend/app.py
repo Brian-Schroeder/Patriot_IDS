@@ -113,10 +113,7 @@ def create_app(config_class=Config) -> Flask:
                     'POST /anomaly/failed-auth': 'Record failed auth'
                 },
                 'notifications': {
-                    'GET /notifications/recipients': 'Get stored email/phone recipients',
-                    'PUT /notifications/recipients': 'Save recipients (body: {emails, phones})',
-                    'POST /notifications/test/email': 'Send test email via AWS SES',
-                    'POST /notifications/test/sms': 'Send test SMS via AWS SNS',
+                    'POST /notifications/test': 'Send test alert to SNS topic',
                 },
                 'blocklist': {
                     'GET /blocklist': 'List blocked IPs',
@@ -229,21 +226,8 @@ def _configure_notifications(app: Flask, alert_service: AlertService) -> None:
         alert_service.register_notification_handler(slack_notifier)
         logger.info("Slack notifications enabled")
 
-    # AWS SNS/SES notifications to stored recipients (from Notification Center)
-    from services.notification_recipients import get_recipients
-    from services.aws_notifications import send_alert_notification
-
-    def aws_notifier(alert):
-        if alert.level.value < AlertLevel.HIGH.value:
-            return
-        recipients = get_recipients()
-        emails = recipients.get("emails", []) or []
-        phones = recipients.get("phones", []) or []
-        if emails or phones:
-            send_alert_notification(alert, emails, phones)
-
-    alert_service.register_notification_handler(aws_notifier)
-    logger.info("AWS SNS/SES notifications enabled (sends to stored recipients)")
+    # SNS notifications are invoked from the pipeline layer (traffic_monitor._process_packets)
+    # not from alert_service handlers, per AWS architecture guidance
 
 
 # Application instance

@@ -214,62 +214,43 @@ The attacker generates traffic that will trigger IDS alerts. Use only in a **con
 
 ---
 
-## 5. Notification Center (SMS & Email via AWS)
+## 5. Notification Center (AWS SNS Topic)
 
-The Notification Center sends test alerts via **AWS SNS** (SMS) and **AWS SES** (email).
+Alerts are sent via **AWS SNS Topic**. Email subscribers are configured in the AWS Console.
 
-### AWS SES (Email)
+### SNS Topic Setup
 
-1. **Verify a sender email** in [SES Console](https://console.aws.amazon.com/ses/):
-   - Identity → Create identity → Email address
-   - Complete verification (click link in inbox)
+1. **Topic ARN** (default): `arn:aws:sns:us-east-1:988718950747:nids-alerts`
+2. **Add email subscriptions** in [SNS Console](https://console.aws.amazon.com/sns/):
+   - Open the topic → Create subscription → Protocol: Email → Enter address
+   - Confirm each address via the verification email
 
-2. **Exit sandbox** (optional): In sandbox, you can only send to verified addresses. For production, request production access.
+### Environment Variables
 
-3. **Environment variables:**
-   ```bash
-   export SES_FROM_EMAIL=alerts@yourdomain.com   # Must be verified
-   export AWS_REGION=us-east-1
-   ```
-
-### AWS SNS (SMS)
-
-1. **Enable SMS** in [SNS Console](https://console.aws.amazon.com/sns/). No identity verification needed for SMS.
-
-2. **Environment variables:**
-   ```bash
-   export AWS_REGION=us-east-1
-   ```
-
-3. **Costs:** SMS has per-message charges; check [SNS pricing](https://aws.amazon.com/sns/pricing/).
+```bash
+export SNS_TOPIC_ARN=arn:aws:sns:us-east-1:988718950747:nids-alerts  # optional, this is the default
+export AWS_REGION=us-east-1
+```
 
 ### Credentials
 
-Use one of:
-- **IAM role** (recommended on EC2/ECS): Attach policy with `ses:SendEmail`, `sns:Publish`
+- **IAM role** (recommended on EC2/ECS): Attach policy with `sns:Publish`
 - **Access keys:**
   ```bash
   export AWS_ACCESS_KEY_ID=...
   export AWS_SECRET_ACCESS_KEY=...
   ```
 
-### IAM Policy Example
+### IAM Policy
 
 ```json
 {
   "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": ["ses:SendEmail", "ses:SendRawEmail"],
-      "Resource": "*"
-    },
-    {
-      "Effect": "Allow",
-      "Action": ["sns:Publish"],
-      "Resource": "*"
-    }
-  ]
+  "Statement": [{
+    "Effect": "Allow",
+    "Action": "sns:Publish",
+    "Resource": "arn:aws:sns:us-east-1:988718950747:nids-alerts"
+  }]
 }
 ```
 

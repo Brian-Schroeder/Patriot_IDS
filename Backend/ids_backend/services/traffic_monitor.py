@@ -315,7 +315,18 @@ class TrafficMonitor:
                 if self.rule_engine:
                     rule_alerts = self.rule_engine.evaluate(packet_info)
                     alerts.extend(rule_alerts)
-                
+
+                # Pipeline: notify for HIGH/CRITICAL alerts (before storage)
+                if alerts:
+                    from services.alert_notification_service import notify_alerts
+
+                    high_alerts = [
+                        a for a in alerts
+                        if a.level in (AlertLevel.HIGH, AlertLevel.CRITICAL)
+                    ]
+                    if high_alerts:
+                        notify_alerts(high_alerts)
+
                 # Submit alerts
                 alert_types = []
                 for alert in alerts:

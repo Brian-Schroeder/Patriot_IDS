@@ -349,76 +349,20 @@ def inject_flow_logs():
 
 
 # =============================================================================
-# Notification Endpoints (AWS SNS/SES)
+# Notification Endpoints (AWS SNS Topic)
 # =============================================================================
 
-from services.notification_recipients import get_recipients, set_recipients
-from services.aws_notifications import (
-    send_ses_email,
-    send_sns_sms,
-    normalize_phone_for_sns,
-)
+from services.sns_notifier import send_test_notification
 
 
-@api.route('/notifications/recipients', methods=['GET'])
+@api.route('/notifications/test', methods=['POST'])
 @handle_errors
-def get_notification_recipients():
-    """Get stored notification recipients (emails, phones) for SNS/SES alerts."""
-    return jsonify(get_recipients())
-
-
-@api.route('/notifications/recipients', methods=['PUT'])
-@handle_errors
-def put_notification_recipients():
+def test_notification():
     """
-    Save notification recipients. Used by the Notification Center.
-    Body: { emails: string[], phones: string[] }
+    Send a test alert to the SNS topic. Email subscribers are configured in AWS.
+    Configure: SNS_TOPIC_ARN (default: arn:aws:sns:us-east-1:988718950747:nids-alerts)
     """
-    data = request.get_json() or {}
-    emails = data.get('emails', [])
-    phones = data.get('phones', [])
-    if not isinstance(emails, list) or not isinstance(phones, list):
-        return jsonify({'error': 'emails and phones must be arrays'}), 400
-    set_recipients(emails, phones)
-    return jsonify(get_recipients())
-
-
-@api.route('/notifications/test/email', methods=['POST'])
-@handle_errors
-def test_notification_email():
-    """
-    Send a test email via AWS SES.
-    Configure: SES_FROM_EMAIL (verified in AWS SES), AWS_REGION, AWS credentials.
-    """
-    data = request.get_json() or {}
-    emails = data.get('emails', [])
-    if not emails or not isinstance(emails, list):
-        return jsonify({'success': False, 'message': 'emails array required'}), 400
-    emails = [e.strip().lower() for e in emails if isinstance(e, str) and e.strip()]
-    if not emails:
-        return jsonify({'success': False, 'message': 'At least one valid email required'}), 400
-    subject = "[IDS] Test Notification"
-    body = "This is a test notification from your IDS control panel. Alert notifications are working."
-    ok, msg = send_ses_email(emails, subject, body)
-    return jsonify({'success': ok, 'message': msg})
-
-
-@api.route('/notifications/test/sms', methods=['POST'])
-@handle_errors
-def test_notification_sms():
-    """
-    Send a test SMS via AWS SNS.
-    Configure: AWS_REGION, AWS credentials. Phone numbers in E.164 format.
-    """
-    data = request.get_json() or {}
-    phones = data.get('phones', [])
-    if not phones or not isinstance(phones, list):
-        return jsonify({'success': False, 'message': 'phones array required'}), 400
-    phones = [normalize_phone_for_sns(str(p)) for p in phones if p]
-    if not phones:
-        return jsonify({'success': False, 'message': 'At least one valid phone number required'}), 400
-    message = "[IDS] Test notification. Alert notifications are working."
-    ok, msg = send_sns_sms(phones, message)
+    ok, msg = send_test_notification()
     return jsonify({'success': ok, 'message': msg})
 
 

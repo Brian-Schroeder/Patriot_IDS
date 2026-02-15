@@ -37,7 +37,7 @@ Post a test alert from Windows CMD
 Open a Windows Command Prompt (not PowerShell) and run this `curl` command (note the escaping of double quotes):
 
 ```cmd
-curl -i -X POST "http://localhost:3001/alerts" -H "Content-Type: application/json" -d "{"severity":"Medium","type":"DDoS","source":"1.5","destination":"1.3","packets":21,"anomaly":-1}"
+curl -i -X POST "http://localhost:3001/alerts" -H "Content-Type: application/json" -d "{\"alert_type\":\"test\",\"source_ip\":\"1.2.3.4\",\"description\":\"test alert from CMD\",\"level\":\"LOW\"}"
 ```
 
 Then list recent alerts:
@@ -45,18 +45,6 @@ Then list recent alerts:
 ```sh
 curl http://localhost:3001/alerts
 ```
-
-Backend Integration
-------------------
-The IDS Backend persists alerts to this service when `IDS_DATABASE_URL` is set:
-
-```bash
-export IDS_DATABASE_URL=http://localhost:3001
-```
-
-When an alert is created in the Backend (from the detection pipeline), it is automatically
-POSTed to `/alerts`. The schema supports: id, time, timestamp, severity, type, source,
-destination, destinationPort, description, status, packets, anomaly, metadata.
 
 Notes
 -----

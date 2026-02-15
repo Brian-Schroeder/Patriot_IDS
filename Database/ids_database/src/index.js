@@ -5,6 +5,8 @@ const cors = require('cors');
 require('dotenv').config();
 
 const alertsRouter = require('./routes/alerts');
+// flowLogs router exposes flow log documents from a separate DB/collection
+const flowLogsRouter = require('./routes/flowLogs');
 
 const app = express();
 app.use(morgan('dev'));
@@ -36,6 +38,7 @@ mongoose.connect(MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true 
   .then(() => {
     console.log('Connected to MongoDB');
     app.use('/alerts', alertsRouter);
+    app.use('/flowLogs', flowLogsRouter);
 
     app.listen(PORT, () => {
       console.log(`IDS database service listening on port ${PORT}`);

@@ -1,4 +1,6 @@
-const API_BASE = import.meta.env.VITE_API_URL ?? import.meta.env.VITE_ATTACKER_API_URL ?? '/api/v1';
+const API_BASE = import.meta.env.DEV
+  ? '/api/v1'
+  : (import.meta.env.VITE_API_URL ?? import.meta.env.VITE_ATTACKER_API_URL ?? '/api/v1');
 
 export interface TestNotificationResponse {
   success: boolean;

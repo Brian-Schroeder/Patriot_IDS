@@ -5,10 +5,14 @@ import type {
   AttackTypeStats,
 } from '../types';
 
+// In dev mode, use relative URL so Vite proxy forwards to localhost backend.
+// In production, use env URL for deployed API.
 const API_BASE =
-  import.meta.env.VITE_API_URL ??
-  import.meta.env.VITE_ATTACKER_API_URL ??
-  '/api/v1';
+  import.meta.env.DEV
+    ? '/api/v1'
+    : (import.meta.env.VITE_API_URL ??
+       import.meta.env.VITE_ATTACKER_API_URL ??
+       '/api/v1');
 
 interface BackendAlert {
   id: string;

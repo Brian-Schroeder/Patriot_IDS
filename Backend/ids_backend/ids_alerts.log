@@ -1505,3 +1505,57 @@
 2026-02-15 11:59:04 | ERROR | [HIGH] LIVE:Port Scan | Source: 203.0.113.42 | Dest: 10.0.1.50:80 | Simulated live stream: Port Scan from 203.0.113.42
 2026-02-15 11:59:10 | WARNING | [MEDIUM] LIVE:Port Scan | Source: 203.0.113.42 | Dest: 10.0.1.50:80 | Simulated live stream: Port Scan from 203.0.113.42
 2026-02-15 11:59:10 | WARNING | [MEDIUM] LIVE:Port Scan | Source: 203.0.113.42 | Dest: 10.0.1.50:80 | Simulated live stream: Port Scan from 203.0.113.42
+2026-02-15 11:59:26 | ERROR | [HIGH] LIVE:DNS Tunneling | Source: 10.0.0.99 | Dest: 10.0.1.50:80 | Simulated live stream: DNS Tunneling from 10.0.0.99
+2026-02-15 11:59:26 | ERROR | [HIGH] LIVE:DNS Tunneling | Source: 10.0.0.99 | Dest: 10.0.1.50:80 | Simulated live stream: DNS Tunneling from 10.0.0.99
+2026-02-15 11:59:50 | ERROR | [HIGH] LIVE:XSS | Source: 172.16.55.33 | Dest: 10.0.1.50:80 | Simulated live stream: XSS from 172.16.55.33
+2026-02-15 11:59:50 | ERROR | [HIGH] LIVE:XSS | Source: 172.16.55.33 | Dest: 10.0.1.50:80 | Simulated live stream: XSS from 172.16.55.33
+2026-02-15 11:59:54 | WARNING | [MEDIUM] LIVE:Brute Force | Source: 192.0.2.77 | Dest: 10.0.1.50:80 | Simulated live stream: Brute Force from 192.0.2.77
+2026-02-15 11:59:54 | WARNING | [MEDIUM] LIVE:Brute Force | Source: 192.0.2.77 | Dest: 10.0.1.50:80 | Simulated live stream: Brute Force from 192.0.2.77
+2026-02-15 11:59:56 | WARNING | [MEDIUM] LIVE:DNS Tunneling | Source: 10.0.0.99 | Dest: 10.0.1.50:80 | Simulated live stream: DNS Tunneling from 10.0.0.99
+2026-02-15 11:59:56 | WARNING | [MEDIUM] LIVE:DNS Tunneling | Source: 10.0.0.99 | Dest: 10.0.1.50:80 | Simulated live stream: DNS Tunneling from 10.0.0.99
+2026-02-15 12:00:00 | WARNING | [MEDIUM] LIVE:DNS Tunneling | Source: 10.0.0.99 | Dest: 10.0.1.50:80 | Simulated live stream: DNS Tunneling from 10.0.0.99
+2026-02-15 12:00:00 | WARNING | [MEDIUM] LIVE:DNS Tunneling | Source: 10.0.0.99 | Dest: 10.0.1.50:80 | Simulated live stream: DNS Tunneling from 10.0.0.99
+2026-02-15 12:00:00 | ERROR | [HIGH] LIVE:SQL Injection | Source: 10.99.88.12 | Dest: 10.0.1.50:80 | Simulated live stream: SQL Injection from 10.99.88.12
+2026-02-15 12:00:00 | ERROR | [HIGH] LIVE:SQL Injection | Source: 10.99.88.12 | Dest: 10.0.1.50:80 | Simulated live stream: SQL Injection from 10.99.88.12
+2026-02-15 12:00:08 | WARNING | [MEDIUM] LIVE:XSS | Source: 172.16.55.33 | Dest: 10.0.1.50:80 | Simulated live stream: XSS from 172.16.55.33
+2026-02-15 12:00:08 | WARNING | [MEDIUM] LIVE:XSS | Source: 172.16.55.33 | Dest: 10.0.1.50:80 | Simulated live stream: XSS from 172.16.55.33
+2026-02-15 12:00:18 | ERROR | [HIGH] LIVE:SQL Injection | Source: 10.99.88.12 | Dest: 10.0.1.50:80 | Simulated live stream: SQL Injection from 10.99.88.12
+2026-02-15 12:00:18 | ERROR | [HIGH] LIVE:SQL Injection | Source: 10.99.88.12 | Dest: 10.0.1.50:80 | Simulated live stream: SQL Injection from 10.99.88.12
+2026-02-15 12:00:24 | ERROR | [HIGH] LIVE:DNS Tunneling | Source: 10.0.0.99 | Dest: 10.0.1.50:80 | Simulated live stream: DNS Tunneling from 10.0.0.99
+2026-02-15 12:00:24 | ERROR | [HIGH] LIVE:DNS Tunneling | Source: 10.0.0.99 | Dest: 10.0.1.50:80 | Simulated live stream: DNS Tunneling from 10.0.0.99
+2026-02-15 12:00:44 | ERROR | [HIGH] LIVE:SQL Injection | Source: 10.99.88.12 | Dest: 10.0.1.50:80 | Simulated live stream: SQL Injection from 10.99.88.12
+2026-02-15 12:00:44 | ERROR | [HIGH] LIVE:SQL Injection | Source: 10.99.88.12 | Dest: 10.0.1.50:80 | Simulated live stream: SQL Injection from 10.99.88.12
+2026-02-15 12:00:58 | ERROR | [HIGH] LIVE:SQL Injection | Source: 10.99.88.12 | Dest: 10.0.1.50:80 | Simulated live stream: SQL Injection from 10.99.88.12
+2026-02-15 12:00:58 | ERROR | [HIGH] LIVE:SQL Injection | Source: 10.99.88.12 | Dest: 10.0.1.50:80 | Simulated live stream: SQL Injection from 10.99.88.12
+2026-02-15 12:01:10 | ERROR | [HIGH] LIVE:SQL Injection | Source: 10.99.88.12 | Dest: 10.0.1.50:80 | Simulated live stream: SQL Injection from 10.99.88.12
+2026-02-15 12:01:10 | ERROR | [HIGH] LIVE:SQL Injection | Source: 10.99.88.12 | Dest: 10.0.1.50:80 | Simulated live stream: SQL Injection from 10.99.88.12
+2026-02-15 12:01:27 | ERROR | [HIGH] LIVE:SQL Injection | Source: 10.99.88.12 | Dest: 10.0.1.50:80 | Simulated live stream: SQL Injection from 10.99.88.12
+2026-02-15 12:01:27 | ERROR | [HIGH] LIVE:SQL Injection | Source: 10.99.88.12 | Dest: 10.0.1.50:80 | Simulated live stream: SQL Injection from 10.99.88.12
+2026-02-15 12:01:43 | WARNING | [MEDIUM] LIVE:Buffer Overflow | Source: 192.168.100.200 | Dest: 10.0.1.50:80 | Simulated live stream: Buffer Overflow from 192.168.100.200
+2026-02-15 12:01:43 | WARNING | [MEDIUM] LIVE:Buffer Overflow | Source: 192.168.100.200 | Dest: 10.0.1.50:80 | Simulated live stream: Buffer Overflow from 192.168.100.200
+2026-02-15 12:02:01 | ERROR | [HIGH] LIVE:XSS | Source: 172.16.55.33 | Dest: 10.0.1.50:80 | Simulated live stream: XSS from 172.16.55.33
+2026-02-15 12:02:01 | ERROR | [HIGH] LIVE:XSS | Source: 172.16.55.33 | Dest: 10.0.1.50:80 | Simulated live stream: XSS from 172.16.55.33
+2026-02-15 12:02:11 | ERROR | [HIGH] LIVE:DNS Tunneling | Source: 10.0.0.99 | Dest: 10.0.1.50:80 | Simulated live stream: DNS Tunneling from 10.0.0.99
+2026-02-15 12:02:11 | ERROR | [HIGH] LIVE:DNS Tunneling | Source: 10.0.0.99 | Dest: 10.0.1.50:80 | Simulated live stream: DNS Tunneling from 10.0.0.99
+2026-02-15 12:02:29 | WARNING | [MEDIUM] LIVE:SQL Injection | Source: 10.99.88.12 | Dest: 10.0.1.50:80 | Simulated live stream: SQL Injection from 10.99.88.12
+2026-02-15 12:02:29 | WARNING | [MEDIUM] LIVE:SQL Injection | Source: 10.99.88.12 | Dest: 10.0.1.50:80 | Simulated live stream: SQL Injection from 10.99.88.12
+2026-02-15 12:02:39 | ERROR | [HIGH] LIVE:Brute Force | Source: 192.0.2.77 | Dest: 10.0.1.50:80 | Simulated live stream: Brute Force from 192.0.2.77
+2026-02-15 12:02:39 | ERROR | [HIGH] LIVE:Brute Force | Source: 192.0.2.77 | Dest: 10.0.1.50:80 | Simulated live stream: Brute Force from 192.0.2.77
+2026-02-15 12:02:49 | ERROR | [HIGH] LIVE:DDoS | Source: 198.51.100.15 | Dest: 10.0.1.50:80 | Simulated live stream: DDoS from 198.51.100.15
+2026-02-15 12:02:49 | ERROR | [HIGH] LIVE:DDoS | Source: 198.51.100.15 | Dest: 10.0.1.50:80 | Simulated live stream: DDoS from 198.51.100.15
+2026-02-15 12:02:53 | ERROR | [HIGH] LIVE:Buffer Overflow | Source: 192.168.100.200 | Dest: 10.0.1.50:80 | Simulated live stream: Buffer Overflow from 192.168.100.200
+2026-02-15 12:02:53 | ERROR | [HIGH] LIVE:Buffer Overflow | Source: 192.168.100.200 | Dest: 10.0.1.50:80 | Simulated live stream: Buffer Overflow from 192.168.100.200
+2026-02-15 12:03:07 | ERROR | [HIGH] LIVE:Buffer Overflow | Source: 192.168.100.200 | Dest: 10.0.1.50:80 | Simulated live stream: Buffer Overflow from 192.168.100.200
+2026-02-15 12:03:07 | ERROR | [HIGH] LIVE:Buffer Overflow | Source: 192.168.100.200 | Dest: 10.0.1.50:80 | Simulated live stream: Buffer Overflow from 192.168.100.200
+2026-02-15 12:03:09 | ERROR | [HIGH] LIVE:SQL Injection | Source: 10.99.88.12 | Dest: 10.0.1.50:80 | Simulated live stream: SQL Injection from 10.99.88.12
+2026-02-15 12:03:09 | ERROR | [HIGH] LIVE:SQL Injection | Source: 10.99.88.12 | Dest: 10.0.1.50:80 | Simulated live stream: SQL Injection from 10.99.88.12
+2026-02-15 12:03:11 | WARNING | [MEDIUM] LIVE:Malware C2 | Source: 45.33.22.11 | Dest: 10.0.1.50:80 | Simulated live stream: Malware C2 from 45.33.22.11
+2026-02-15 12:03:11 | WARNING | [MEDIUM] LIVE:Malware C2 | Source: 45.33.22.11 | Dest: 10.0.1.50:80 | Simulated live stream: Malware C2 from 45.33.22.11
+2026-02-15 12:03:13 | ERROR | [HIGH] LIVE:Brute Force | Source: 192.0.2.77 | Dest: 10.0.1.50:80 | Simulated live stream: Brute Force from 192.0.2.77
+2026-02-15 12:03:13 | ERROR | [HIGH] LIVE:Brute Force | Source: 192.0.2.77 | Dest: 10.0.1.50:80 | Simulated live stream: Brute Force from 192.0.2.77
+2026-02-15 12:03:15 | ERROR | [HIGH] LIVE:Port Scan | Source: 203.0.113.42 | Dest: 10.0.1.50:80 | Simulated live stream: Port Scan from 203.0.113.42
+2026-02-15 12:03:15 | ERROR | [HIGH] LIVE:Port Scan | Source: 203.0.113.42 | Dest: 10.0.1.50:80 | Simulated live stream: Port Scan from 203.0.113.42
+2026-02-15 12:03:21 | WARNING | [MEDIUM] LIVE:DDoS | Source: 198.51.100.15 | Dest: 10.0.1.50:80 | Simulated live stream: DDoS from 198.51.100.15
+2026-02-15 12:03:21 | WARNING | [MEDIUM] LIVE:DDoS | Source: 198.51.100.15 | Dest: 10.0.1.50:80 | Simulated live stream: DDoS from 198.51.100.15
+2026-02-15 12:03:23 | ERROR | [HIGH] LIVE:DNS Tunneling | Source: 10.0.0.99 | Dest: 10.0.1.50:80 | Simulated live stream: DNS Tunneling from 10.0.0.99
+2026-02-15 12:03:23 | ERROR | [HIGH] LIVE:DNS Tunneling | Source: 10.0.0.99 | Dest: 10.0.1.50:80 | Simulated live stream: DNS Tunneling from 10.0.0.99

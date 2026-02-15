@@ -287,7 +287,6 @@ def _configure_notifications(app: Flask, alert_service: AlertService) -> None:
         alert_service.register_notification_handler(db_persist_handler)
         logger.info(f"Database persistence enabled: {database_url}")
 
-
     # SNS notifications (AWS)
     sns_topic_arn = os.environ.get('SNS_TOPIC_ARN')
     if sns_topic_arn:

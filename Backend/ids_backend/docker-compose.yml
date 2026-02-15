@@ -21,6 +21,13 @@ services:
       - SMTP_PASSWORD=${SMTP_PASSWORD:-}
       - SMTP_FROM=${SMTP_FROM:-ids@example.com}
       - ALERT_EMAILS=${ALERT_EMAILS:-}
+      - AWS_REGION=us-east-1
+      - SNS_TOPIC_ARN=arn:aws:sns:us-east-1:988718950747:nids-alerts
+      - VITE_API_URL=http://54.91.109.44:5000/api/v1
+
+
+
+
     volumes:
       - ./logs:/app/logs
       - ./data:/app/data

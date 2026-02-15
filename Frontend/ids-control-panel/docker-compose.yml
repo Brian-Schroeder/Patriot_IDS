@@ -1,6 +1,10 @@
 services:
   ids-panel:
-    build: .
+    build: 
+      context: .
+      args:
+        VITE_API_URL: http://54.91.109.44:5000/api/v1
     ports:
       - "3000:80"
     container_name: ids-control-panel
+  

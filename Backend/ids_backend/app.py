@@ -8,6 +8,7 @@ from flask_cors import CORS
 from config import Config
 from api.routes import api, init_routes
 from services.alert_service import AlertService, WebhookNotifier, EmailNotifier
+from services.sns_notifier import SNSNotifier
 from services.traffic_monitor import TrafficMonitor
 from models.alert import AlertLevel
 
@@ -286,9 +287,16 @@ def _configure_notifications(app: Flask, alert_service: AlertService) -> None:
         alert_service.register_notification_handler(db_persist_handler)
         logger.info(f"Database persistence enabled: {database_url}")
 
-    # SNS notifications are invoked from the pipeline layer (traffic_monitor._process_packets)
-    # not from alert_service handlers, per AWS architecture guidance
 
+    # SNS notifications (AWS)
+    sns_topic_arn = os.environ.get('SNS_TOPIC_ARN')
+    if sns_topic_arn:
+        try:
+            sns_notifier = SNSNotifier(min_level=AlertLevel.HIGH)
+            alert_service.register_notification_handler(sns_notifier)
+            logger.info("SNS notifications enabled")
+        except Exception as e:
+            logger.warning(f"Failed to configure SNS notifications: {e}")
 
 # Application instance
 app = create_app()

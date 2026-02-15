@@ -21,6 +21,9 @@ services:
       - SMTP_PASSWORD=${SMTP_PASSWORD:-}
       - SMTP_FROM=${SMTP_FROM:-ids@example.com}
       - ALERT_EMAILS=${ALERT_EMAILS:-}
+      - SNS_TOPIC_ARN=arn:aws:sns:us-east-1:988718950747:nids-alerts
+      - AWS_REGION=us-east-1
+
     volumes:
       - ./logs:/app/logs
       - ./data:/app/data

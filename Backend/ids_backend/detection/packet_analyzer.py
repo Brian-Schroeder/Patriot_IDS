@@ -64,9 +64,13 @@ class PacketAnalyzer:
     def analyze(self, packet_data: Dict[str, Any]) -> PacketInfo:
         """Parse raw packet data into PacketInfo structure"""
         self.packet_count += 1
-        
+
+        ts = packet_data.get("timestamp") or packet_data.get("_ts")
+        if not isinstance(ts, datetime):
+            ts = datetime.utcnow()
+
         return PacketInfo(
-            timestamp=datetime.utcnow(),
+            timestamp=ts,
             source_ip=packet_data.get('src_ip', '0.0.0.0'),
             destination_ip=packet_data.get('dst_ip', '0.0.0.0'),
             source_port=packet_data.get('src_port', 0),

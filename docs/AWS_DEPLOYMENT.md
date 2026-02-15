@@ -90,8 +90,14 @@ pip3 install -r requirements.txt
 export IDS_HOST=0.0.0.0
 export IDS_PORT=5000
 export NETWORK_INTERFACE=eth0
-# Optional: MongoDB integration (if backend writes to MongoDB)
-# export MONGODB_URI=mongodb://user:pass@docdb-endpoint:27017/ids
+# Optional: Persist alerts to IDS Database service (MongoDB)
+# export IDS_DATABASE_URL=http://localhost:3001
+
+# Anomaly pipeline (DB1 -> detector -> DB2)
+# export MONGODB_URI_DB1=mongodb+srv://user:pass@cluster.mongodb.net/ids_traffic
+# export MONGODB_URI_DB2=mongodb+srv://user:pass@cluster.mongodb.net/ids_anomalies
+# export DB1_COLLECTION=traffic
+# export DB2_COLLECTION=anomalies
 ```
 
 4. Run with gunicorn:

@@ -8,11 +8,16 @@ const AlertStatus = {
 };
 
 const AlertSchema = new mongoose.Schema({
+  id: { type: String, unique: true, sparse: true },
   time: { type: Date, default: Date.now },
+  timestamp: { type: Date, default: Date.now },
   severity: { type: String, default: 'None' },
   type: { type: String, default: 'None' },
   source: { type: String },
   destination: { type: String },
+  destinationPort: { type: Number },
+  description: { type: String },
+  status: { type: String, default: 'new', enum: Object.values(AlertStatus) },
   packets: { type: Number, default: 0 },
   anomaly: { type: Number, default: -1 },
   metadata: { type: mongoose.Schema.Types.Mixed }
@@ -33,5 +38,9 @@ const AlertSchema = new mongoose.Schema({
     }
   }
 });
+
+// Index for fast queries by timestamp
+AlertSchema.index({ timestamp: -1 });
+AlertSchema.index({ time: -1 });
 
 module.exports = mongoose.model('Alert', AlertSchema);

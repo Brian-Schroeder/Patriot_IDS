@@ -82,6 +82,9 @@ def create_app(config_class=Config) -> Flask:
                     'GET /status': 'System status overview',
                     'GET /stats': 'Detailed statistics'
                 },
+                'pipeline': {
+                    'POST /pipeline/run-anomaly': 'Run anomaly pipeline (DB1 -> detector -> DB2)',
+                },
                 'monitor': {
                     'POST /monitor/start': 'Start traffic monitoring',
                     'POST /monitor/stop': 'Stop traffic monitoring',
@@ -226,6 +229,17 @@ def _configure_notifications(app: Flask, alert_service: AlertService) -> None:
         
         alert_service.register_notification_handler(slack_notifier)
         logger.info("Slack notifications enabled")
+
+    # Database persistence - persist alerts to MongoDB via IDS Database service
+    database_url = os.environ.get("IDS_DATABASE_URL", "")
+    if database_url:
+        from services.database_client import persist_alert
+
+        def db_persist_handler(alert):
+            persist_alert(alert)
+
+        alert_service.register_notification_handler(db_persist_handler)
+        logger.info(f"Database persistence enabled: {database_url}")
 
     # SNS notifications are invoked from the pipeline layer (traffic_monitor._process_packets)
     # not from alert_service handlers, per AWS architecture guidance

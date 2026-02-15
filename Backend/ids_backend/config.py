@@ -7,6 +7,8 @@ class Config:
     
     # Database
     DATABASE_URI = os.environ.get('DATABASE_URI', 'sqlite:///ids.db')
+    # IDS Database service URL (MongoDB persistence) - e.g. http://localhost:3001
+    IDS_DATABASE_URL = os.environ.get('IDS_DATABASE_URL', '')
     
     # Detection thresholds
     PACKET_RATE_THRESHOLD = 1000      # packets per second

@@ -349,6 +349,28 @@ def inject_flow_logs():
 
 
 # =============================================================================
+# Anomaly Pipeline (DB1 -> Detector -> DB2)
+# =============================================================================
+
+@api.route('/pipeline/run-anomaly', methods=['POST'])
+@handle_errors
+def run_anomaly_pipeline():
+    """
+    Run the anomaly detection pipeline: fetch traffic from DB1, detect anomalies, write to DB2.
+    Configure: MONGODB_URI_DB1, MONGODB_URI_DB2.
+    """
+    from services.anomaly_pipeline import run_anomaly_pipeline as _run
+
+    data = request.get_json() or {}
+    batch_size = min(int(data.get('batch_size', 500)), 5000)
+    use_ml = data.get('use_ml', True)
+    hours_back = int(data.get('hours_back', 1))
+
+    result = _run(batch_size=batch_size, use_ml_detector=use_ml, hours_back=hours_back)
+    return jsonify(result)
+
+
+# =============================================================================
 # Notification Endpoints (AWS SNS Topic)
 # =============================================================================
 

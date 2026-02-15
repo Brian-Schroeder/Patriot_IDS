@@ -37,7 +37,7 @@ Post a test alert from Windows CMD
 Open a Windows Command Prompt (not PowerShell) and run this `curl` command (note the escaping of double quotes):
 
 ```cmd
-curl -i -X POST "http://localhost:3001/alerts" -H "Content-Type: application/json" -d "{\"alert_type\":\"test\",\"source_ip\":\"1.2.3.4\",\"description\":\"test alert from CMD\",\"level\":\"LOW\"}"
+curl -i -X POST "http://localhost:3001/alerts" -H "Content-Type: application/json" -d "{"severity":"Medium","type":"DDoS","source":"1.5","destination":"1.3","packets":21,"anomaly":-1}"
 ```
 
 Then list recent alerts:

@@ -12,7 +12,7 @@ from detection.anomaly_classifier import AnomalyEvent
 logger = logging.getLogger(__name__)
 
 MONGODB_URI_DB2 = os.environ.get("MONGODB_URI_DB2", "")
-DB2_DATABASE = os.environ.get("DB2_DATABASE", "")
+DB2_DATABASE = os.environ.get("DB2_DATABASE", "ids")
 DB2_COLLECTION = os.environ.get("DB2_COLLECTION", "anomalies")
 DB2_STATE_COLLECTION = "pipeline_state"
 

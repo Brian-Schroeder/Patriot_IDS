@@ -10,8 +10,8 @@ from typing import Any, Dict, List, Optional
 logger = logging.getLogger(__name__)
 
 MONGODB_URI_DB1 = os.environ.get("MONGODB_URI_DB1", "")
-DB1_DATABASE = os.environ.get("DB1_DATABASE", "")
-DB1_COLLECTION = os.environ.get("DB1_COLLECTION", "traffic")
+DB1_DATABASE = os.environ.get("DB1_DATABASE", "vpcLogs")
+DB1_COLLECTION = os.environ.get("DB1_COLLECTION", "flowLogs")
 DB1_BATCH_SIZE = int(os.environ.get("DB1_BATCH_SIZE", "500"))
 
 

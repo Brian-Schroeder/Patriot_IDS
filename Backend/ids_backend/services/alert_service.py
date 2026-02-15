@@ -42,17 +42,21 @@ class AlertService:
     
     def _setup_file_logger(self) -> None:
         """Configure file-based alert logging"""
-        self.file_handler = logging.FileHandler(self.log_file)
-        self.file_handler.setLevel(logging.WARNING)
-        formatter = logging.Formatter(
-            '%(asctime)s | %(levelname)s | %(message)s',
-            datefmt='%Y-%m-%d %H:%M:%S'
-        )
-        self.file_handler.setFormatter(formatter)
-        
-        self.alert_logger = logging.getLogger('ids.alerts')
-        self.alert_logger.addHandler(self.file_handler)
-        self.alert_logger.setLevel(logging.WARNING)
+        try:
+            self.file_handler = logging.FileHandler(self.log_file)
+            self.file_handler.setLevel(logging.WARNING)
+            formatter = logging.Formatter(
+                '%(asctime)s | %(levelname)s | %(message)s',
+                datefmt='%Y-%m-%d %H:%M:%S'
+            )
+            self.file_handler.setFormatter(formatter)
+            self.alert_logger = logging.getLogger('ids.alerts')
+            self.alert_logger.addHandler(self.file_handler)
+            self.alert_logger.setLevel(logging.WARNING)
+        except OSError as e:
+            logger.warning(f"Could not create alert log file {self.log_file}: {e}")
+            self.file_handler = None
+            self.alert_logger = logging.getLogger('ids.alerts')
     
     def _generate_rate_limit_key(self, alert: Alert) -> str:
         """Generate a key for rate limiting similar alerts"""
@@ -88,6 +92,8 @@ class AlertService:
     
     def _log_to_file(self, alert: Alert) -> None:
         """Write alert to log file"""
+        if not getattr(self, 'file_handler', None):
+            return
         log_level = {
             AlertLevel.LOW: logging.INFO,
             AlertLevel.MEDIUM: logging.WARNING,
@@ -181,8 +187,10 @@ class AlertService:
                 continue
             if alert_type and alert_type not in alert.alert_type:
                 continue
-            if since and alert.timestamp < since:
-                continue
+            if since:
+                since_naive = since.replace(tzinfo=None) if since.tzinfo else since
+                if alert.timestamp < since_naive:
+                    continue
             
             filtered_alerts.append(alert)
         

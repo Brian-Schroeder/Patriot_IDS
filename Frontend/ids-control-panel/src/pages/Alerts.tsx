@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { mockAlerts } from '../api/mockData';
+import { fetchAlerts } from '../api/alertsApi';
 import { format, subHours } from 'date-fns';
 import { Search, Filter, ChevronDown } from 'lucide-react';
 import type { IntrusionAlert } from '../types';
@@ -24,9 +24,11 @@ export function Alerts() {
   const [destFilter, setDestFilter] = useState('');
   const [showFilters, setShowFilters] = useState(false);
 
-  const { data: alerts } = useQuery({
+  const { data: alerts = [] } = useQuery({
     queryKey: ['allAlerts'],
-    queryFn: () => mockAlerts,
+    queryFn: () => fetchAlerts({ limit: 1000 }),
+    retry: 1,
+    refetchInterval: 3000,
   });
 
   const attackTypes = useMemo(() => {

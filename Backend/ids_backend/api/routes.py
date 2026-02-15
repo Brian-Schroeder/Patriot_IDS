@@ -226,6 +226,61 @@ def _flow_log_to_packet(record: dict) -> dict:
     }
 
 
+@api.route('/demo/live-tick', methods=['POST'])
+def demo_live_tick():
+    """
+    Generate one batch of simulated live traffic. Poll every ~2s for live stream demo.
+    Returns packet and alert counts.
+    """
+    try:
+        if not alert_service:
+            return jsonify({'error': 'Alert service not initialized', 'success': False}), 500
+        from services.demo_simulator import live_tick as _tick
+        result = _tick(alert_service=alert_service, traffic_monitor=traffic_monitor)
+        return jsonify(result)
+    except Exception as e:
+        logger.exception("Demo live-tick failed")
+        return jsonify({'error': str(e), 'success': False}), 500
+
+
+@api.route('/demo/simulate-attack', methods=['POST'])
+def simulate_attack():
+    """
+    Simulate how the IDS would react to an attack. No attacker VM needed.
+    Creates alerts, updates Packets Received, sends SNS for HIGH/CRITICAL.
+    
+    Request body:
+    - attackType: One of Port Scan, DDoS, Brute Force, SQL Injection, XSS, Buffer Overflow, DNS Tunneling, Malware C2
+    - targetIp: (optional) Override target IP.
+    """
+    try:
+        if not alert_service:
+            return jsonify({'error': 'Alert service not initialized', 'success': False}), 500
+
+        data = request.get_json(silent=True) or {}
+        if not data or 'attackType' not in data:
+            return jsonify({'error': 'attackType required', 'success': False}), 400
+
+        from services.demo_simulator import simulate_attack as _simulate
+        attack_type = data['attackType']
+        target_ip = (data.get('targetIp') or '').strip() or None
+
+        result = _simulate(
+            attack_type=attack_type,
+            alert_service=alert_service,
+            traffic_monitor=traffic_monitor,
+            target_ip=target_ip,
+        )
+        return jsonify(result)
+    except Exception as e:
+        logger.exception("Demo simulate-attack failed")
+        return jsonify({
+            'error': str(e),
+            'success': False,
+            'message': f'Simulation failed: {e}'
+        }), 500
+
+
 @api.route('/attack/start', methods=['POST'])
 @handle_errors
 def start_attack():
@@ -426,7 +481,14 @@ def get_alerts():
     # Convert string parameters to enums
     level_enum = AlertLevel[level.upper()] if level else None
     status_enum = AlertStatus(status.lower()) if status else None
-    since = datetime.fromisoformat(since_str) if since_str else None
+    since = None
+    if since_str:
+        try:
+            # Handle ISO format with 'Z' suffix (from JS toISOString)
+            s = since_str.replace('Z', '+00:00') if since_str.endswith('Z') else since_str
+            since = datetime.fromisoformat(s)
+        except (ValueError, TypeError):
+            since = None
     
     alerts = alert_service.get_alerts(
         level=level_enum,
@@ -1024,7 +1086,7 @@ def check_blocklist(ip: str):
 @handle_errors
 def get_dashboard_summary():
     """Get summary data for dashboard display"""
-    if not alert_service or not traffic_monitor:
+    if not alert_service:
         return jsonify({'error': 'Services not initialized'}), 500
     
     # Get time-based alert counts
@@ -1058,7 +1120,10 @@ def get_dashboard_summary():
     top_alert_types = sorted(type_counts.items(), key=lambda x: x[1], reverse=True)[:10]
     
     # Get monitor status
-    monitor_status = traffic_monitor.get_status()
+    try:
+        monitor_status = traffic_monitor.get_status() if traffic_monitor else {}
+    except Exception:
+        monitor_status = {}
     
     # Get recent critical alerts
     critical_alerts = [
@@ -1069,7 +1134,7 @@ def get_dashboard_summary():
     return jsonify({
         'timestamp': now.isoformat(),
         'monitor': {
-            'status': 'running' if monitor_status['is_running'] else 'stopped',
+            'status': 'running' if monitor_status.get('is_running') else 'stopped',
             'uptime_seconds': monitor_status.get('uptime_seconds', 0),
             'packets_per_second': monitor_status.get('packets_per_second', 0),
             'total_packets': monitor_status.get('packets_processed', 0)
@@ -1100,27 +1165,55 @@ def get_alert_timeline():
     
     Query parameters:
     - hours: Number of hours to look back (default: 24, max: 168)
-    - interval: Grouping interval in minutes (default: 60)
+    - minutes: Number of minutes to look back (overrides hours when set; max: 60)
+    - interval: Grouping interval in minutes (default: 60, min: 1 when minutes used, else 5)
     """
     if not alert_service:
         return jsonify({'error': 'Alert service not initialized'}), 500
     
-    hours = min(int(request.args.get('hours', 24)), 168)  # Max 1 week
-    interval = max(int(request.args.get('interval', 60)), 5)  # Min 5 minutes
+    max_points = request.args.get('max_points', type=int)
+    max_buckets = min(max_points, 12) if max_points and max_points > 0 else 12  # Cap for readable charts
+
+    minutes_param = request.args.get('minutes', type=int)
+    if minutes_param is not None and minutes_param > 0:
+        minutes_param = min(minutes_param, 60)  # Cap at 60 min
+        start_time = datetime.utcnow() - timedelta(minutes=minutes_param)
+        requested_interval = request.args.get('interval', type=int)
+        if requested_interval is not None and requested_interval >= 1:
+            interval = requested_interval
+        else:
+            # Auto interval to cap at max_buckets for readable bar charts
+            interval = max(1, (minutes_param + max_buckets - 1) // max_buckets)
+    else:
+        hours = min(int(request.args.get('hours', 24)), 168)  # Max 1 week
+        requested_interval = request.args.get('interval', type=int)
+        if requested_interval is not None and requested_interval >= 5:
+            interval = requested_interval
+        else:
+            # Auto interval to cap at max_buckets (e.g. 12 buckets for 24h = 2h each)
+            total_minutes = hours * 60
+            interval = max(5, (total_minutes + max_buckets - 1) // max_buckets)
+        start_time = datetime.utcnow() - timedelta(hours=hours)
     
     now = datetime.utcnow()
-    start_time = now - timedelta(hours=hours)
+    
+    # Align to interval boundaries so bucket keys match alert bucketing
+    def align_to_interval(dt):
+        m = (dt.minute // interval) * interval
+        return dt.replace(minute=m, second=0, microsecond=0)
+    
+    start_aligned = align_to_interval(start_time)
     
     # Get all alerts in range
     alerts = alert_service.get_alerts(since=start_time, limit=50000)
     
-    # Create time buckets
+    # Create time buckets (aligned to interval boundaries)
     buckets = {}
-    current = start_time
+    current = start_aligned
     while current <= now:
         bucket_key = current.strftime('%Y-%m-%d %H:%M')
         buckets[bucket_key] = {
-            'timestamp': current.isoformat(),
+            'timestamp': current.strftime('%Y-%m-%dT%H:%M:%S') + 'Z',
             'total': 0,
             'low': 0,
             'medium': 0,

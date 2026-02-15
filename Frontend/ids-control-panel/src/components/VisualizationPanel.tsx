@@ -1,51 +1,59 @@
+import { useEffect } from 'react';
 import { useChartStore } from '../store/chartStore';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
+
+const LIVE_TICK_INTERVAL_MS = 2000;
 import {
-  getTrafficStats,
-  getSeverityDistribution,
-  getAttackTypeStats,
-  getFilteredAlerts,
-} from '../api/mockData';
+  getTrafficStatsFromApi,
+  getSeverityDistributionFromApi,
+  getAlertsFromApi,
+} from '../api/alertsApi';
 import { ChartSelector } from './ChartSelector';
 import { BarChart } from './charts/BarChart';
 import { LineChartComponent } from './charts/LineChart';
 import { DotPlot } from './charts/DotPlot';
-import { BoxPlot } from './charts/BoxPlot';
 import { PieChartComponent } from './charts/PieChart';
 
+const VALID_CHART_TYPES = ['bar', 'line', 'dotplot', 'pie'] as const;
+
 export function VisualizationPanel() {
-  const { chartType, timeRange } = useChartStore();
+  const { chartType, timeRange, setChartType } = useChartStore();
+  const effectiveChartType = VALID_CHART_TYPES.includes(chartType as (typeof VALID_CHART_TYPES)[number])
+    ? chartType
+    : 'bar';
 
-  const { data: trafficStats } = useQuery({
+  useEffect(() => {
+    if (effectiveChartType !== chartType) {
+      setChartType('bar');
+    }
+  }, [chartType, effectiveChartType, setChartType]);
+
+  const { data: trafficStats = [] } = useQuery({
     queryKey: ['trafficStats', timeRange],
-    queryFn: () => getTrafficStats(timeRange),
+    queryFn: () => getTrafficStatsFromApi(timeRange),
+    retry: 1,
+    refetchInterval: LIVE_TICK_INTERVAL_MS,
+    placeholderData: keepPreviousData,
   });
 
-  const { data: severityDist } = useQuery({
+  const { data: severityDist = [] } = useQuery({
     queryKey: ['severityDistribution', timeRange],
-    queryFn: () => getSeverityDistribution(timeRange),
+    queryFn: () => getSeverityDistributionFromApi(timeRange),
+    retry: 1,
+    refetchInterval: LIVE_TICK_INTERVAL_MS,
+    placeholderData: keepPreviousData,
   });
 
-  const { data: attackTypeStats } = useQuery({
-    queryKey: ['attackTypeStats', timeRange],
-    queryFn: () => getAttackTypeStats(timeRange),
-  });
-
-  const { data: filteredAlerts } = useQuery({
+  const { data: filteredAlerts = [] } = useQuery({
     queryKey: ['filteredAlerts', timeRange],
-    queryFn: () => getFilteredAlerts(timeRange),
+    queryFn: () => getAlertsFromApi(timeRange),
+    retry: 1,
+    refetchInterval: LIVE_TICK_INTERVAL_MS,
+    placeholderData: keepPreviousData,
   });
-
-  if (!trafficStats || !severityDist || !attackTypeStats || !filteredAlerts) {
-    return (
-      <div className="flex items-center justify-center h-64 text-[var(--ids-text-muted)]">
-        Loading visualization data...
-      </div>
-    );
-  }
 
   const renderChart = () => {
-    switch (chartType) {
+    switch (effectiveChartType) {
       case 'bar':
         return (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -53,7 +61,7 @@ export function VisualizationPanel() {
               data={trafficStats}
               dataKey="hour"
               valueKey="alerts"
-              title="Alerts by Hour"
+              title="Alerts Over Time"
               variant="alertsByHour"
               xAxisLabel="Time"
               yAxisLabel="Alerts"
@@ -73,15 +81,8 @@ export function VisualizationPanel() {
         return <LineChartComponent data={trafficStats} title="Traffic & Alerts Over Time" />;
       case 'dotplot':
         return <DotPlot data={filteredAlerts} title="Alerts: Packets vs Time" />;
-      case 'boxplot':
-        return (
-          <BoxPlot
-            data={attackTypeStats}
-            title="Packet Distribution by Attack Type"
-          />
-        );
       case 'pie':
-        return <PieChartComponent data={severityDist} title="Alert Severity Breakdown" />;
+        return <PieChartComponent data={severityDist.filter((s) => s.count > 0)} title="Alert Severity Breakdown" />;
       default:
         return null;
     }

@@ -5,9 +5,13 @@ Entry point script for running the IDS backend.
 
 import os
 
-# Load .env before any other imports
-from dotenv import load_dotenv
-load_dotenv()
+# Load .env before any other imports (optional)
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass  # python-dotenv not installed; use pip install python-dotenv
+
 import sys
 import argparse
 import logging

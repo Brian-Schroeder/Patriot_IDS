@@ -1,15 +1,24 @@
 import { useState, useEffect } from 'react';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { startAttack, getReceivedPackets, ATTACK_TYPES, type AttackType } from '../api/attackerApi';
-import { FlaskConical, Play, CheckCircle, XCircle, Loader2, Inbox, Server, Save } from 'lucide-react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  startAttack,
+  simulateAttack,
+  ATTACK_TYPES,
+  type AttackType,
+} from '../api/attackerApi';
+import { fetchAlerts } from '../api/alertsApi';
+import { FlaskConical, Play, CheckCircle, XCircle, Loader2, AlertTriangle, Server, Save } from 'lucide-react';
 import { format } from 'date-fns';
 
 const STORAGE_KEY_ATTACKER = 'ids_attacker_url';
 const STORAGE_KEY_TARGET = 'ids_target_ip';
+const STORAGE_KEY_DEMO_MODE = 'ids_demo_mode';
 
 export function Testing() {
+  const queryClient = useQueryClient();
   const [attackerUrl, setAttackerUrl] = useState('');
   const [targetIp, setTargetIp] = useState('');
+  const [demoMode, setDemoMode] = useState(true);
   const [configSaved, setConfigSaved] = useState(false);
   const [selectedType, setSelectedType] = useState<AttackType | null>(null);
   const [lastResult, setLastResult] = useState<{ success: boolean; message?: string } | null>(null);
@@ -17,6 +26,7 @@ export function Testing() {
   useEffect(() => {
     setAttackerUrl(localStorage.getItem(STORAGE_KEY_ATTACKER) ?? '');
     setTargetIp(localStorage.getItem(STORAGE_KEY_TARGET) ?? '');
+    setDemoMode(localStorage.getItem(STORAGE_KEY_DEMO_MODE) !== 'false');
   }, []);
 
   const saveConfig = () => {
@@ -24,11 +34,12 @@ export function Testing() {
       localStorage.setItem(STORAGE_KEY_ATTACKER, attackerUrl.trim());
     }
     localStorage.setItem(STORAGE_KEY_TARGET, targetIp.trim());
+    localStorage.setItem(STORAGE_KEY_DEMO_MODE, String(demoMode));
     setConfigSaved(true);
     setTimeout(() => setConfigSaved(false), 2000);
   };
 
-  const mutation = useMutation({
+  const realAttackMutation = useMutation({
     mutationFn: (params: { attackType: AttackType; attackerUrl: string; targetIp?: string }) =>
       startAttack(params.attackType, params.attackerUrl, params.targetIp || undefined),
     onSuccess: (data) => {
@@ -45,36 +56,72 @@ export function Testing() {
     },
   });
 
-  const { data: packets = [], refetch: refetchPackets } = useQuery({
-    queryKey: ['receivedPackets'],
-    queryFn: getReceivedPackets,
+  const demoMutation = useMutation({
+    mutationFn: (params: { attackType: AttackType; targetIp?: string }) =>
+      simulateAttack(params.attackType, params.targetIp),
+    onSuccess: (data, variables) => {
+      const count = (data as { alerts_created?: number }).alerts_created ?? 1;
+      setLastResult({
+        success: data.success,
+        message: data.success
+          ? `IDS detected ${variables.attackType}! ${count} alert(s) created. Check Dashboard & Alerts.`
+          : (data as { message?: string }).message,
+      });
+      queryClient.invalidateQueries({ queryKey: ['alerts'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboardSummary'] });
+      queryClient.invalidateQueries({ queryKey: ['allAlerts'] });
+      queryClient.invalidateQueries({ queryKey: ['trafficStats'] });
+      queryClient.invalidateQueries({ queryKey: ['severityDistribution'] });
+      queryClient.invalidateQueries({ queryKey: ['filteredAlerts'] });
+      queryClient.invalidateQueries({ queryKey: ['recentAlerts'] });
+    },
+    onError: (err) => {
+      setLastResult({
+        success: false,
+        message: err instanceof Error ? err.message : 'Unknown error',
+      });
+    },
+  });
+
+  const isPending = demoMutation.isPending || realAttackMutation.isPending;
+  const { data: alerts = [], refetch: refetchAlerts } = useQuery({
+    queryKey: ['recentAlerts'],
+    queryFn: () => fetchAlerts({ limit: 50 }),
     refetchInterval: 2000,
     retry: false,
   });
 
   const handleStartAttack = (attackType: AttackType) => {
-    const url = (attackerUrl.trim() || localStorage.getItem(STORAGE_KEY_ATTACKER)) ?? '';
-    if (!url) {
-      setLastResult({
-        success: false,
-        message: 'Configure Attacker URL first. Enter the attacker VM IP (e.g. 10.0.1.100:9999).',
-      });
-      return;
-    }
-    const finalUrl = url.includes('://') ? url : `http://${url}`;
-    const finalTarget = (targetIp.trim() || localStorage.getItem(STORAGE_KEY_TARGET)) ?? undefined;
-
     setSelectedType(attackType);
     setLastResult(null);
-    mutation.mutate({
-      attackType,
-      attackerUrl: finalUrl,
-      targetIp: finalTarget || undefined,
-    });
-    refetchPackets();
+
+    if (demoMode) {
+      const finalTarget = (targetIp.trim() || localStorage.getItem(STORAGE_KEY_TARGET)) || undefined;
+      demoMutation.mutate({ attackType, targetIp: finalTarget });
+    } else {
+      const url = (attackerUrl.trim() || localStorage.getItem(STORAGE_KEY_ATTACKER)) ?? '';
+      if (!url) {
+        setLastResult({
+          success: false,
+          message: 'Configure Attacker URL first. Enter the attacker VM IP (e.g. 10.0.1.100:9999).',
+        });
+        return;
+      }
+      const finalUrl = url.includes('://') ? url : `http://${url}`;
+      const finalTarget = (targetIp.trim() || localStorage.getItem(STORAGE_KEY_TARGET)) ?? undefined;
+      realAttackMutation.mutate({
+        attackType,
+        attackerUrl: finalUrl,
+        targetIp: finalTarget || undefined,
+      });
+    }
+    refetchAlerts();
+    if (demoMode) {
+      queryClient.invalidateQueries({ queryKey: ['recentAlerts'] });
+    }
   };
 
-  const isConfigured = Boolean(attackerUrl.trim() || localStorage.getItem(STORAGE_KEY_ATTACKER));
+  const isConfigured = demoMode || Boolean(attackerUrl.trim() || localStorage.getItem(STORAGE_KEY_ATTACKER));
 
   return (
     <div className="space-y-8">
@@ -136,21 +183,52 @@ export function Testing() {
 
       {/* Attack Testing */}
       <div className="rounded-xl bg-[var(--ids-surface)] border border-[var(--ids-border)] p-6 shadow-sm">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 rounded-lg bg-amber-500/20">
-            <FlaskConical className="w-6 h-6 text-amber-500" />
+        <div className="flex items-center justify-between gap-4 mb-6 flex-wrap">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-amber-500/20">
+              <FlaskConical className="w-6 h-6 text-amber-500" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-[var(--ids-text)]">Attack Testing</h3>
+              <p className="text-sm text-[var(--ids-text-muted)]">
+                {demoMode
+                  ? 'Simulate attacks to see how the IDS reacts (no attacker VM needed)'
+                  : 'Signal the attacker VM to run real attacks for IDS validation'}
+              </p>
+            </div>
           </div>
-          <div>
-            <h3 className="text-lg font-semibold text-[var(--ids-text)]">Attack Testing</h3>
-            <p className="text-sm text-[var(--ids-text-muted)]">
-              Signal the attacker VM to start a specific attack type for IDS validation
-            </p>
-          </div>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <span className="text-sm font-medium text-[var(--ids-text-muted)]">Demo Mode</span>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={demoMode}
+              onClick={() => {
+                setDemoMode((v) => !v);
+                localStorage.setItem(STORAGE_KEY_DEMO_MODE, String(!demoMode));
+              }}
+              className={`relative inline-flex h-6 w-11 flex-shrink-0 rounded-full transition-colors ${
+                demoMode ? 'bg-[var(--ids-accent)]' : 'bg-[var(--ids-border)]'
+              }`}
+            >
+              <span
+                className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
+                  demoMode ? 'translate-x-5' : 'translate-x-1'
+                }`}
+              />
+            </button>
+          </label>
         </div>
 
-        {!isConfigured && (
+        {!demoMode && !isConfigured && (
           <div className="mb-6 p-4 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-400 text-sm">
             Configure the Attacker URL above before running tests.
+          </div>
+        )}
+
+        {demoMode && (
+          <div className="mb-6 p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-sm">
+            Demo mode on: Click any attack button to simulate detection. Alerts will appear on Dashboard and Alerts tabs.
           </div>
         )}
 
@@ -162,14 +240,14 @@ export function Testing() {
                 key={type}
                 type="button"
                 onClick={() => handleStartAttack(type)}
-                disabled={mutation.isPending || !isConfigured}
+                disabled={isPending || !isConfigured}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all disabled:opacity-60 disabled:cursor-not-allowed ${
                   selectedType === type
                     ? 'bg-[var(--ids-accent)]/20 text-[var(--ids-accent)] border border-[var(--ids-accent)]/50'
                     : 'bg-[var(--ids-border)]/30 text-[var(--ids-text-muted)] border border-transparent hover:bg-[var(--ids-border)]/50 hover:text-[var(--ids-text)]'
                 }`}
               >
-                {mutation.isPending && selectedType === type ? (
+                {isPending && selectedType === type ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
                   <Play className="w-4 h-4" />
@@ -206,10 +284,10 @@ export function Testing() {
 
       <div className="rounded-xl bg-[var(--ids-surface)] border border-[var(--ids-border)] overflow-hidden shadow-sm">
         <h3 className="px-6 py-4 text-lg font-semibold border-b border-[var(--ids-border)] flex items-center gap-2">
-          <Inbox className="w-5 h-5 text-[var(--ids-accent)]" />
-          Packets Received
+          <AlertTriangle className="w-5 h-5 text-[var(--ids-accent)]" />
+          Recent Alerts
         </h3>
-        {packets.length > 0 ? (
+        {alerts.length > 0 ? (
           <div className="overflow-x-auto max-h-80 overflow-y-auto">
             <table className="w-full text-sm">
               <thead className="sticky top-0 bg-[var(--ids-surface)]">
@@ -224,47 +302,45 @@ export function Testing() {
                     Dest
                   </th>
                   <th className="text-left px-6 py-3 text-[var(--ids-text-muted)] font-medium">
-                    Protocol
+                    Severity
                   </th>
                   <th className="text-left px-6 py-3 text-[var(--ids-text-muted)] font-medium">
-                    Port
-                  </th>
-                  <th className="text-right px-6 py-3 text-[var(--ids-text-muted)] font-medium">
-                    Size
-                  </th>
-                  <th className="text-left px-6 py-3 text-[var(--ids-text-muted)] font-medium">
-                    Type
+                    Attack Type
                   </th>
                 </tr>
               </thead>
               <tbody>
-                {packets.map((p) => (
+                {alerts.map((a) => (
                   <tr
-                    key={p.id}
+                    key={a.id}
                     className="border-b border-[var(--ids-border)]/50 hover:bg-[var(--ids-border)]/30"
                   >
                     <td className="px-6 py-3 text-[var(--ids-text-muted)] font-mono text-xs">
-                      {format(new Date(p.timestamp), 'HH:mm:ss.SSS')}
+                      {format(new Date(a.timestamp), 'HH:mm:ss')}
                     </td>
                     <td className="px-6 py-3 font-mono text-[var(--ids-text)] text-xs">
-                      {p.sourceIp}
+                      {a.sourceIp}
                     </td>
                     <td className="px-6 py-3 font-mono text-[var(--ids-text)] text-xs">
-                      {p.destIp}
-                    </td>
-                    <td className="px-6 py-3 text-[var(--ids-text)]">{p.protocol}</td>
-                    <td className="px-6 py-3 text-[var(--ids-text)]">{p.port}</td>
-                    <td className="px-6 py-3 text-right text-[var(--ids-text)]">
-                      {p.size} B
+                      {a.destIp}
                     </td>
                     <td className="px-6 py-3">
-                      {p.attackType ? (
-                        <span className="px-2 py-0.5 rounded text-xs font-medium bg-[var(--ids-danger)]/20 text-[var(--ids-danger)]">
-                          {p.attackType}
-                        </span>
-                      ) : (
-                        <span className="text-[var(--ids-text-muted)]">—</span>
-                      )}
+                      <span
+                        className={`px-2 py-0.5 rounded text-xs font-medium ${
+                          a.severity === 'critical'
+                            ? 'bg-red-500/20 text-red-400'
+                            : a.severity === 'high'
+                              ? 'bg-orange-500/20 text-orange-400'
+                              : a.severity === 'medium'
+                                ? 'bg-amber-500/20 text-amber-400'
+                                : 'bg-emerald-500/20 text-emerald-400'
+                        }`}
+                      >
+                        {a.severity}
+                      </span>
+                    </td>
+                    <td className="px-6 py-3 text-[var(--ids-text)] text-xs">
+                      {a.attackType}
                     </td>
                   </tr>
                 ))}
@@ -273,10 +349,10 @@ export function Testing() {
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-16 text-[var(--ids-text-muted)]">
-            <Inbox className="w-12 h-12 mb-3 opacity-40" />
-            <p className="text-sm">No packets received yet</p>
+            <AlertTriangle className="w-12 h-12 mb-3 opacity-40" />
+            <p className="text-sm">No alerts yet</p>
             <p className="text-xs mt-1">
-              Packets will appear here when the traffic monitor captures attack traffic
+              Alerts will appear here when you simulate attacks
             </p>
           </div>
         )}

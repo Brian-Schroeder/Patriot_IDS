@@ -1,4 +1,4 @@
-import { BarChart3, LineChart, Circle, Box, PieChart, Clock } from 'lucide-react';
+import { BarChart3, LineChart, Circle, PieChart, Clock } from 'lucide-react';
 import type { ChartType } from '../types';
 import { useChartStore } from '../store/chartStore';
 
@@ -6,15 +6,18 @@ const chartOptions: { type: ChartType; label: string; icon: React.ReactNode }[] 
   { type: 'bar', label: 'Bar Chart', icon: <BarChart3 size={18} /> },
   { type: 'line', label: 'Line Chart', icon: <LineChart size={18} /> },
   { type: 'dotplot', label: 'Dot Plot', icon: <Circle size={18} /> },
-  { type: 'boxplot', label: 'Box Plot', icon: <Box size={18} /> },
   { type: 'pie', label: 'Pie Chart', icon: <PieChart size={18} /> },
 ];
 
-const timeOptions: { range: '1h' | '6h' | '24h' | '7d'; label: string }[] = [
+import type { TimeRange } from '../store/chartStore';
+
+const timeOptions: { range: TimeRange; label: string }[] = [
+  { range: '1m', label: '1 Min' },
+  { range: '5m', label: '5 Min' },
+  { range: '15m', label: '15 Min' },
+  { range: '30m', label: '30 Min' },
   { range: '1h', label: '1 Hour' },
-  { range: '6h', label: '6 Hours' },
   { range: '24h', label: '24 Hours' },
-  { range: '7d', label: '7 Days' },
 ];
 
 export function ChartSelector() {

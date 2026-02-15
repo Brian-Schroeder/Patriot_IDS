@@ -16,6 +16,8 @@ interface LineChartProps {
 }
 
 export function LineChartComponent({ data, title }: LineChartProps) {
+  const packetsMax = Math.max(...data.map((d) => d.totalPackets ?? 0), 1);
+  const alertsMax = Math.max(...data.map((d) => d.alerts ?? 0), 1);
   return (
     <div className="w-full h-full min-h-[520px] space-y-8">
       {title && (
@@ -35,6 +37,7 @@ export function LineChartComponent({ data, title }: LineChartProps) {
             <YAxis
               stroke="var(--ids-text-muted)"
               tick={{ fill: 'var(--ids-text-muted)', fontSize: 12 }}
+              domain={[0, packetsMax]}
               label={{ value: 'Packets', angle: -90, position: 'insideLeft', fill: 'var(--ids-text-muted)', fontSize: 12 }}
             />
             <Tooltip
@@ -72,6 +75,7 @@ export function LineChartComponent({ data, title }: LineChartProps) {
             <YAxis
               stroke="var(--ids-text-muted)"
               tick={{ fill: 'var(--ids-text-muted)', fontSize: 12 }}
+              domain={[0, alertsMax]}
               label={{ value: 'Alerts', angle: -90, position: 'insideLeft', fill: 'var(--ids-text-muted)', fontSize: 12 }}
             />
             <Tooltip

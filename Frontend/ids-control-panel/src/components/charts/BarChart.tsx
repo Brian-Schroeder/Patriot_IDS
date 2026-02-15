@@ -60,6 +60,28 @@ export function BarChart({
   xAxisLabel,
   yAxisLabel,
 }: BarChartProps) {
+  const safeData = data ?? [];
+  const yMax = Math.max(
+    ...safeData.map((d) => Number((d as unknown as Record<string, unknown>)[valueKey]) || 0),
+    1
+  );
+
+  if (variant === 'severity' && safeData.length > 0) {
+    const total = safeData.reduce(
+      (sum, d) => sum + Number((d as unknown as Record<string, unknown>)[valueKey]) || 0,
+      0
+    );
+    if (total === 0) {
+      return (
+        <div className="w-full min-h-[420px] flex flex-col items-center justify-center text-[var(--ids-text-muted)]">
+          {title && (
+            <h3 className="text-lg font-semibold mb-4 text-[var(--ids-text)]">{title}</h3>
+          )}
+          <p>No alerts in this time range</p>
+        </div>
+      );
+    }
+  }
   const getBarFill = (entry: BarChartData): string => {
     if (variant === 'alertsByHour') {
       const t = entry as TrafficStats;
@@ -85,12 +107,12 @@ export function BarChart({
   );
 
   return (
-    <div className="w-full h-full min-h-[400px]">
+    <div className="w-full min-h-[420px]">
       {title && (
         <h3 className="text-lg font-semibold mb-4 text-[var(--ids-text)]">{title}</h3>
       )}
-      <ResponsiveContainer width="100%" height="100%" minHeight={400}>
-        <RechartsBar data={data} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+      <ResponsiveContainer width="100%" height={400}>
+        <RechartsBar data={safeData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }} barCategoryGap={4} barGap={0}>
           <CartesianGrid strokeDasharray="3 3" stroke="var(--ids-border)" opacity={0.5} />
           <XAxis
             dataKey={dataKey}
@@ -101,6 +123,7 @@ export function BarChart({
           <YAxis
             stroke="var(--ids-text-muted)"
             tick={{ fill: 'var(--ids-text-muted)', fontSize: 12 }}
+            domain={[0, yMax]}
             label={yAxisLabel ? { value: yAxisLabel, angle: -90, position: 'insideLeft', fill: 'var(--ids-text-muted)', fontSize: 12 } : undefined}
           />
           <Tooltip
@@ -133,9 +156,10 @@ export function BarChart({
             dataKey={valueKey}
             fill="#00d4aa"
             radius={[4, 4, 0, 0]}
+            barSize={variant === 'alertsByHour' && safeData.length > 0 ? Math.max(24, 320 / safeData.length) : undefined}
             activeBar={(props) => <ExpandedBar {...props} />}
           >
-            {data.map((entry, index) => (
+            {safeData.map((entry, index) => (
               <Cell key={index} fill={getBarFill(entry)} />
             ))}
           </Bar>

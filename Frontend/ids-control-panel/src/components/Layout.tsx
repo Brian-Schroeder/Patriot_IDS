@@ -1,7 +1,41 @@
+import { useEffect, useRef } from 'react';
 import { Shield, Activity, AlertTriangle, FlaskConical, Bell } from 'lucide-react';
 import { Outlet, NavLink } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
+import { simulateLiveTick } from '../api/attackerApi';
+
+const LIVE_TICK_INTERVAL_MS = 2000;
 
 export function Layout() {
+  const queryClient = useQueryClient();
+  const tickIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    const runTick = async () => {
+      try {
+        await simulateLiveTick();
+        queryClient.invalidateQueries({ queryKey: ['trafficStats'] });
+        queryClient.invalidateQueries({ queryKey: ['severityDistribution'] });
+        queryClient.invalidateQueries({ queryKey: ['filteredAlerts'] });
+        queryClient.invalidateQueries({ queryKey: ['dashboardSummary'] });
+        queryClient.invalidateQueries({ queryKey: ['alerts'] });
+        queryClient.invalidateQueries({ queryKey: ['allAlerts'] });
+        queryClient.invalidateQueries({ queryKey: ['receivedPackets'] });
+      } catch {
+        // Backend may be down; silently ignore
+      }
+    };
+
+    tickIntervalRef.current = setInterval(runTick, LIVE_TICK_INTERVAL_MS);
+    runTick();
+
+    return () => {
+      if (tickIntervalRef.current) {
+        clearInterval(tickIntervalRef.current);
+        tickIntervalRef.current = null;
+      }
+    };
+  }, [queryClient]);
   return (
     <div className="flex min-h-screen">
       <aside className="w-56 flex-shrink-0 bg-[var(--ids-surface)] border-r border-[var(--ids-border)] flex flex-col shadow-sm">

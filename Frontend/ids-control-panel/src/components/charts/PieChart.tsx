@@ -7,22 +7,31 @@ interface PieChartProps {
 }
 
 const SEVERITY_COLORS: Record<string, string> = {
-  low: 'var(--ids-severity-low)',
-  medium: 'var(--ids-severity-medium)',
-  high: 'var(--ids-severity-high)',
-  critical: 'var(--ids-severity-critical)',
+  low: '#22c55e',
+  medium: '#fbbf24',
+  high: '#f97316',
+  critical: '#ef4444',
 };
 
 export function PieChartComponent({ data, title }: PieChartProps) {
+  const chartData = (data ?? []).filter((d) => (d.count ?? 0) > 0);
+  if (!chartData.length) {
+    return (
+      <div className="w-full min-h-[400px] flex flex-col items-center justify-center text-[var(--ids-text-muted)]">
+        {title && <h3 className="text-lg font-semibold mb-4 text-[var(--ids-text)]">{title}</h3>}
+        <p>No severity data to display</p>
+      </div>
+    );
+  }
   return (
     <div className="w-full h-full min-h-[450px]">
       {title && (
         <h3 className="text-lg font-semibold mb-4 text-[var(--ids-text)]">{title}</h3>
       )}
-      <ResponsiveContainer width="100%" height="100%" minHeight={400}>
+      <ResponsiveContainer width="100%" height={400}>
         <RechartsPie>
           <Pie
-            data={data}
+            data={chartData}
             dataKey="count"
             nameKey="severity"
             cx="50%"
@@ -30,7 +39,7 @@ export function PieChartComponent({ data, title }: PieChartProps) {
             outerRadius={100}
             label={({ name, value }) => `${name}: ${value}`}
           >
-            {data.map((entry, index) => (
+            {chartData.map((entry, index) => (
               <Cell
                 key={index}
                 fill={SEVERITY_COLORS[entry.severity] ?? 'var(--ids-accent)'}

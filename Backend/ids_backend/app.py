@@ -1,5 +1,7 @@
 import os
 import logging
+import threading
+import time
 from flask import Flask, jsonify
 from flask_cors import CORS
 
@@ -10,13 +12,15 @@ from services.traffic_monitor import TrafficMonitor
 from models.alert import AlertLevel
 
 # Configure logging
+_handlers = [logging.StreamHandler()]
+try:
+    _handlers.append(logging.FileHandler('ids.log'))
+except OSError:
+    pass  # Log file optional
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.StreamHandler(),
-        logging.FileHandler('ids.log')
-    ]
+    handlers=_handlers
 )
 logger = logging.getLogger(__name__)
 
@@ -53,7 +57,13 @@ def create_app(config_class=Config) -> Flask:
     
     # Initialize API routes with services
     init_routes(alert_service, traffic_monitor)
-    
+
+    # Seed initial simulated data so dashboard has content immediately
+    _seed_initial_sim_data(alert_service, traffic_monitor)
+
+    # Start simulated live data stream (runs in background, no MongoDB)
+    _start_simulated_live_stream(alert_service, traffic_monitor)
+
     # Register blueprints
     app.register_blueprint(api)
     
@@ -158,6 +168,42 @@ def create_app(config_class=Config) -> Flask:
     return app
 
 
+_sim_stream_stop = threading.Event()
+
+
+def _seed_initial_sim_data(alert_service, traffic_monitor):
+    """Seed a few simulated alerts and packets so the dashboard shows data on first load."""
+    try:
+        from services.demo_simulator import simulate_attack
+        for attack_type in ["Port Scan", "DDoS", "SQL Injection"]:
+            simulate_attack(
+                attack_type=attack_type,
+                alert_service=alert_service,
+                traffic_monitor=traffic_monitor,
+                target_ip=None,
+            )
+        logger.info("Seeded initial simulated alerts")
+    except Exception as e:
+        logger.warning(f"Could not seed initial data: {e}")
+
+
+def _start_simulated_live_stream(alert_service, traffic_monitor):
+    """Start background thread that simulates live traffic flow. Data stored locally (in-memory)."""
+    from services.demo_simulator import live_tick
+
+    def _run():
+        logger.info("Simulated live data stream started (local storage)")
+        while not _sim_stream_stop.is_set():
+            try:
+                live_tick(alert_service=alert_service, traffic_monitor=traffic_monitor)
+            except Exception as e:
+                logger.debug(f"Live tick error: {e}")
+            _sim_stream_stop.wait(timeout=2.0)  # 2 second interval
+
+    t = threading.Thread(target=_run, name="SimLiveStream", daemon=True)
+    t.start()
+
+
 def _configure_notifications(app: Flask, alert_service: AlertService) -> None:
     """Configure alert notification handlers based on environment"""
     
@@ -229,9 +275,9 @@ def _configure_notifications(app: Flask, alert_service: AlertService) -> None:
         alert_service.register_notification_handler(slack_notifier)
         logger.info("Slack notifications enabled")
 
-    # Database persistence - persist alerts to MongoDB via IDS Database service
+    # Database persistence - only when USE_EXTERNAL_DB=1 and IDS_DATABASE_URL set (default: local in-memory)
     database_url = os.environ.get("IDS_DATABASE_URL", "")
-    if database_url:
+    if database_url and os.environ.get("USE_EXTERNAL_DB", "").lower() in ("1", "true", "yes"):
         from services.database_client import persist_alert
 
         def db_persist_handler(alert):

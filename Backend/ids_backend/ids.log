@@ -1,0 +1,65 @@
+2026-02-15 10:37:11,722 - detection.rule_engine - INFO - Added rule: SQL Injection Attempt (ID: 76d4b58d-4eae-4097-9371-584cfb086f96)
+2026-02-15 10:37:11,723 - detection.rule_engine - INFO - Added rule: XSS Attempt (ID: a3bc5013-f6c6-4025-a5ab-00262c4132ee)
+2026-02-15 10:37:11,723 - detection.rule_engine - INFO - Added rule: Path Traversal (ID: cf9162fc-e1f1-49fd-9510-3fe708a971bf)
+2026-02-15 10:37:11,723 - detection.rule_engine - INFO - Added rule: Shell Command Injection (ID: f7366d70-28c6-4ea8-b4aa-dd6dccbd490d)
+2026-02-15 10:37:11,723 - detection.rule_engine - INFO - Added rule: Sensitive File Access (ID: 41479b6c-7ddb-424c-a4f5-26c267d2dd17)
+2026-02-15 10:37:11,744 - ids.alerts - WARNING - [MEDIUM] ANOMALY:PORT_SCAN | Source: 203.0.113.42 | Dest: 10.0.1.50:22 | Port scan detected from 203.0.113.42: 25 unique ports accessed (22, 23, 80, 443, 3306, ...)
+2026-02-15 10:37:11,745 - services.alert_service - INFO - Alert created: 54044fef-b489-470a-807c-6a2e4c4d7c50 - ANOMALY:PORT_SCAN
+2026-02-15 10:37:11,745 - ids.alerts - CRITICAL - [CRITICAL] ANOMALY:CONNECTION_FLOOD | Source: 198.51.100.15 | Dest: 10.0.1.50:80 | DDoS/Connection flood: 500+ connections from 198.51.100.15 in 60s
+2026-02-15 10:37:11,745 - services.alert_service - INFO - Alert created: c1dfe163-51f1-4f45-abfe-db322c4a46d8 - ANOMALY:CONNECTION_FLOOD
+2026-02-15 10:37:12,367 - services.sns_notifier - ERROR - Failed to send SNS alert: Unable to locate credentials
+2026-02-15 10:37:12,367 - ids.alerts - ERROR - [HIGH] SIGNATURE:SQL Injection Attempt | Source: 10.99.88.12 | Dest: 10.0.1.50:80 | Detects common SQL injection patterns. Pattern matched: union select
+2026-02-15 10:37:12,367 - services.alert_service - INFO - Alert created: a4cb97fc-2d6c-49e5-a7ef-623a44e092ef - SIGNATURE:SQL Injection Attempt
+2026-02-15 10:37:12,376 - services.sns_notifier - ERROR - Failed to send SNS alert: Unable to locate credentials
+2026-02-15 10:37:12,376 - app - INFO - Seeded initial simulated alerts
+2026-02-15 10:37:12,377 - app - INFO - Simulated live data stream started (local storage)
+2026-02-15 10:37:12,422 - app - INFO - IDS Application initialized successfully
+2026-02-15 10:37:12,424 - detection.rule_engine - INFO - Added rule: SQL Injection Attempt (ID: d68ba4b1-67e0-4eb9-a2b9-9caba1e0f535)
+2026-02-15 10:37:12,424 - detection.rule_engine - INFO - Added rule: XSS Attempt (ID: 89048664-b6ad-4e06-85c0-0708ed3567ba)
+2026-02-15 10:37:12,424 - detection.rule_engine - INFO - Added rule: Path Traversal (ID: 1dfd96b2-caa6-4203-adcb-6a2c28d6383d)
+2026-02-15 10:37:12,424 - detection.rule_engine - INFO - Added rule: Shell Command Injection (ID: 9fbd1252-e381-4e79-a43a-ccb36c5e154c)
+2026-02-15 10:37:12,424 - detection.rule_engine - INFO - Added rule: Sensitive File Access (ID: e2bcca0c-a0dc-4ba9-b8bf-4f8393e79c30)
+2026-02-15 10:37:12,424 - ids.alerts - WARNING - [MEDIUM] ANOMALY:PORT_SCAN | Source: 203.0.113.42 | Dest: 10.0.1.50:22 | Port scan detected from 203.0.113.42: 25 unique ports accessed (22, 23, 80, 443, 3306, ...)
+2026-02-15 10:37:12,424 - services.alert_service - INFO - Alert created: 9bc7ac0e-a28a-4031-ac09-60c219c83190 - ANOMALY:PORT_SCAN
+2026-02-15 10:37:12,424 - ids.alerts - CRITICAL - [CRITICAL] ANOMALY:CONNECTION_FLOOD | Source: 198.51.100.15 | Dest: 10.0.1.50:80 | DDoS/Connection flood: 500+ connections from 198.51.100.15 in 60s
+2026-02-15 10:37:12,425 - services.alert_service - INFO - Alert created: 356c3a10-ec5b-46de-a470-77a853ea6d19 - ANOMALY:CONNECTION_FLOOD
+2026-02-15 10:37:12,456 - services.sns_notifier - ERROR - Failed to send SNS alert: Unable to locate credentials
+2026-02-15 10:37:12,457 - ids.alerts - ERROR - [HIGH] SIGNATURE:SQL Injection Attempt | Source: 10.99.88.12 | Dest: 10.0.1.50:80 | Detects common SQL injection patterns. Pattern matched: union select
+2026-02-15 10:37:12,457 - services.alert_service - INFO - Alert created: 4801a3d2-5c1f-4ad8-a8aa-63e4a11c0027 - SIGNATURE:SQL Injection Attempt
+2026-02-15 10:37:12,504 - services.sns_notifier - ERROR - Failed to send SNS alert: Unable to locate credentials
+2026-02-15 10:37:12,505 - app - INFO - Seeded initial simulated alerts
+2026-02-15 10:37:12,505 - app - INFO - Simulated live data stream started (local storage)
+2026-02-15 10:37:12,542 - app - INFO - IDS Application initialized successfully
+2026-02-15 10:37:45,247 - detection.rule_engine - INFO - Added rule: SQL Injection Attempt (ID: 52406b07-869e-40de-9f61-319214b8ef8f)
+2026-02-15 10:37:45,248 - detection.rule_engine - INFO - Added rule: XSS Attempt (ID: 7bd013e9-2e40-4b98-9ed7-55c63f615014)
+2026-02-15 10:37:45,248 - detection.rule_engine - INFO - Added rule: Path Traversal (ID: 9a985b22-5675-49a2-82fa-02b4ac2e55f5)
+2026-02-15 10:37:45,248 - detection.rule_engine - INFO - Added rule: Shell Command Injection (ID: 8de018d7-09d1-40dd-bba3-479803cd3d2d)
+2026-02-15 10:37:45,248 - detection.rule_engine - INFO - Added rule: Sensitive File Access (ID: 13ba836b-6ed8-471b-89b1-4ad5099d84c2)
+2026-02-15 10:37:45,249 - ids.alerts - WARNING - [MEDIUM] ANOMALY:PORT_SCAN | Source: 203.0.113.42 | Dest: 10.0.1.50:22 | Port scan detected from 203.0.113.42: 25 unique ports accessed (22, 23, 80, 443, 3306, ...)
+2026-02-15 10:37:45,249 - services.alert_service - INFO - Alert created: 0848b456-4258-4773-be45-6c30eed4250d - ANOMALY:PORT_SCAN
+2026-02-15 10:37:45,250 - ids.alerts - CRITICAL - [CRITICAL] ANOMALY:CONNECTION_FLOOD | Source: 198.51.100.15 | Dest: 10.0.1.50:80 | DDoS/Connection flood: 500+ connections from 198.51.100.15 in 60s
+2026-02-15 10:37:45,250 - services.alert_service - INFO - Alert created: 024a6718-36b0-4173-83f3-4d9a6189c2a7 - ANOMALY:CONNECTION_FLOOD
+2026-02-15 10:37:45,678 - services.sns_notifier - ERROR - Failed to send SNS alert: Unable to locate credentials
+2026-02-15 10:37:45,678 - ids.alerts - ERROR - [HIGH] SIGNATURE:SQL Injection Attempt | Source: 10.99.88.12 | Dest: 10.0.1.50:80 | Detects common SQL injection patterns. Pattern matched: union select
+2026-02-15 10:37:45,678 - services.alert_service - INFO - Alert created: 246125d2-8295-4329-80f8-c6480b7307f7 - SIGNATURE:SQL Injection Attempt
+2026-02-15 10:37:45,702 - services.sns_notifier - ERROR - Failed to send SNS alert: Unable to locate credentials
+2026-02-15 10:37:45,703 - app - INFO - Seeded initial simulated alerts
+2026-02-15 10:37:45,703 - app - INFO - Simulated live data stream started (local storage)
+2026-02-15 10:37:45,726 - services.alert_service - INFO - Alert created: dfac931a-5f1b-4311-99b7-6e635ed190a8 - LIVE:DDoS
+2026-02-15 10:37:45,729 - app - INFO - IDS Application initialized successfully
+2026-02-15 10:37:45,733 - detection.rule_engine - INFO - Added rule: SQL Injection Attempt (ID: 2a31ceb1-c2c2-49f9-be26-c8b32fd012af)
+2026-02-15 10:37:45,733 - detection.rule_engine - INFO - Added rule: XSS Attempt (ID: e4d0c05f-3f1c-4634-bbe1-64cedc3b0fef)
+2026-02-15 10:37:45,733 - detection.rule_engine - INFO - Added rule: Path Traversal (ID: 8a968a99-2b58-4dfc-b6f1-9fa442300441)
+2026-02-15 10:37:45,733 - detection.rule_engine - INFO - Added rule: Shell Command Injection (ID: f32fcdd5-81a0-477c-b2dc-4af50a8b408e)
+2026-02-15 10:37:45,733 - detection.rule_engine - INFO - Added rule: Sensitive File Access (ID: fc5b4c86-1da8-4dac-9dbf-f8dda3873bed)
+2026-02-15 10:37:45,733 - ids.alerts - WARNING - [MEDIUM] ANOMALY:PORT_SCAN | Source: 203.0.113.42 | Dest: 10.0.1.50:22 | Port scan detected from 203.0.113.42: 25 unique ports accessed (22, 23, 80, 443, 3306, ...)
+2026-02-15 10:37:45,733 - services.alert_service - INFO - Alert created: 9a6c8770-fd3d-4f22-88f2-a9173f3228a7 - ANOMALY:PORT_SCAN
+2026-02-15 10:37:45,734 - ids.alerts - CRITICAL - [CRITICAL] ANOMALY:CONNECTION_FLOOD | Source: 198.51.100.15 | Dest: 10.0.1.50:80 | DDoS/Connection flood: 500+ connections from 198.51.100.15 in 60s
+2026-02-15 10:37:45,734 - services.alert_service - INFO - Alert created: 06b4115c-d425-449d-9976-eb61729e1923 - ANOMALY:CONNECTION_FLOOD
+2026-02-15 10:37:45,763 - services.sns_notifier - ERROR - Failed to send SNS alert: Unable to locate credentials
+2026-02-15 10:37:45,764 - ids.alerts - ERROR - [HIGH] SIGNATURE:SQL Injection Attempt | Source: 10.99.88.12 | Dest: 10.0.1.50:80 | Detects common SQL injection patterns. Pattern matched: union select
+2026-02-15 10:37:45,764 - services.alert_service - INFO - Alert created: 6f84f77d-475e-4210-9e9c-fb0f8c5afa48 - SIGNATURE:SQL Injection Attempt
+2026-02-15 10:37:45,794 - services.sns_notifier - ERROR - Failed to send SNS alert: Unable to locate credentials
+2026-02-15 10:37:45,794 - app - INFO - Seeded initial simulated alerts
+2026-02-15 10:37:45,795 - app - INFO - Simulated live data stream started (local storage)
+2026-02-15 10:37:45,825 - app - INFO - IDS Application initialized successfully

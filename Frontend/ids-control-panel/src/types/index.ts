@@ -1,4 +1,4 @@
-export type ChartType = 'boxplot' | 'dotplot' | 'bar' | 'line' | 'pie';
+export type ChartType = 'dotplot' | 'bar' | 'line' | 'pie';
 
 export interface IntrusionAlert {
   id: string;

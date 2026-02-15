@@ -15,16 +15,13 @@ export async function sendTestNotification(): Promise<TestNotificationResponse> 
     body: JSON.stringify({}),
   });
 
+  const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    const text = await res.text();
-    try {
-      const data = JSON.parse(text);
-      throw new Error(data?.message ?? data?.error ?? `Request failed: ${res.status}`);
-    } catch (e) {
-      if (e instanceof Error && e.message.startsWith('Request failed')) throw e;
-      throw new Error(`Request failed: ${res.status} ${res.statusText}`);
-    }
+    throw new Error(data?.message ?? data?.error ?? `Request failed: ${res.status}`);
   }
-
-  return res.json();
+  // Backend returns 200 with success/message; success: false means AWS/config error
+  if (data.success === false && data.message) {
+    throw new Error(data.message);
+  }
+  return data;
 }

@@ -356,14 +356,18 @@ from services.sns_notifier import send_test_notification
 
 
 @api.route('/notifications/test', methods=['POST'])
-@handle_errors
 def test_notification():
     """
     Send a test alert to the SNS topic. Email subscribers are configured in AWS.
     Configure: SNS_TOPIC_ARN (default: arn:aws:sns:us-east-1:988718950747:nids-alerts)
+    Always returns 200 with success/message so the frontend can display the error.
     """
-    ok, msg = send_test_notification()
-    return jsonify({'success': ok, 'message': msg})
+    try:
+        ok, msg = send_test_notification()
+        return jsonify({'success': ok, 'message': msg})
+    except Exception as e:
+        logger.exception("Notification test failed")
+        return jsonify({'success': False, 'message': str(e)})
 
 
 # =============================================================================

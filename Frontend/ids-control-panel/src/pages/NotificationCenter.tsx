@@ -39,12 +39,12 @@ export function NotificationCenter() {
             Click to send a test alert to all subscribers of the SNS topic. This verifies that
             notifications are working.
           </p>
-          {testMutation.isError && (
+          {(testMutation.isError || (testMutation.isSuccess && testMutation.data?.success === false)) && (
             <p className="text-sm text-[var(--ids-danger)]">
-              {testMutation.error instanceof Error ? testMutation.error.message : 'Request failed'}
+              {testMutation.error instanceof Error ? testMutation.error.message : testMutation.data?.message ?? 'Request failed'}
             </p>
           )}
-          {testMutation.isSuccess && (
+          {testMutation.isSuccess && testMutation.data?.success !== false && (
             <p className="text-sm text-emerald-500">{testMutation.data?.message ?? 'Test sent successfully.'}</p>
           )}
         </div>

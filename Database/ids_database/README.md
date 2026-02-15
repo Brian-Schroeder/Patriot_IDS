@@ -46,6 +46,18 @@ Then list recent alerts:
 curl http://localhost:3001/alerts
 ```
 
+Backend Integration
+------------------
+The IDS Backend persists alerts to this service when `IDS_DATABASE_URL` is set:
+
+```bash
+export IDS_DATABASE_URL=http://localhost:3001
+```
+
+When an alert is created in the Backend (from the detection pipeline), it is automatically
+POSTed to `/alerts`. The schema supports: id, time, timestamp, severity, type, source,
+destination, destinationPort, description, status, packets, anomaly, metadata.
+
 Notes
 -----
 - If you use MongoDB Atlas via the `MONGODB_URI` in `.env`, ensure your IP is allowed in Atlas Network Access.

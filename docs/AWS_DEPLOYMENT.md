@@ -90,8 +90,8 @@ pip3 install -r requirements.txt
 export IDS_HOST=0.0.0.0
 export IDS_PORT=5000
 export NETWORK_INTERFACE=eth0
-# Optional: MongoDB integration (if backend writes to MongoDB)
-# export MONGODB_URI=mongodb://user:pass@docdb-endpoint:27017/ids
+# Optional: Persist alerts to IDS Database service (MongoDB)
+# export IDS_DATABASE_URL=http://localhost:3001
 ```
 
 4. Run with gunicorn:

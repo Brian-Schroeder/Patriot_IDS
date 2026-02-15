@@ -229,8 +229,7 @@ def _configure_notifications(app: Flask, alert_service: AlertService) -> None:
         
         alert_service.register_notification_handler(slack_notifier)
         logger.info("Slack notifications enabled")
-
-    # Database persistence - persist alerts to MongoDB via IDS Database service
+# Database persistence - persist alerts to MongoDB via IDS Database service
     database_url = os.environ.get("IDS_DATABASE_URL", "")
     if database_url:
         from services.database_client import persist_alert
@@ -241,10 +240,11 @@ def _configure_notifications(app: Flask, alert_service: AlertService) -> None:
         alert_service.register_notification_handler(db_persist_handler)
         logger.info(f"Database persistence enabled: {database_url}")
 
+
     # SNS notifications are invoked from the pipeline layer (traffic_monitor._process_packets)
     # not from alert_service handlers, per AWS architecture guidance
 
-    # SNS notifications (AWS)
+# SNS notifications (AWS)
     sns_topic_arn = os.environ.get('SNS_TOPIC_ARN')
     if sns_topic_arn:
         try:
@@ -253,7 +253,6 @@ def _configure_notifications(app: Flask, alert_service: AlertService) -> None:
             logger.info("SNS notifications enabled")
         except Exception as e:
             logger.warning(f"Failed to configure SNS notifications: {e}")
-
 
 # Application instance
 app = create_app()

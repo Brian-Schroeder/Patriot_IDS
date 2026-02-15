@@ -81,6 +81,9 @@ def create_app(config_class=Config) -> Flask:
                     'GET /status': 'System status overview',
                     'GET /stats': 'Detailed statistics'
                 },
+                'pipeline': {
+                    'POST /pipeline/run-anomaly': 'Run anomaly pipeline (DB1 -> detector -> DB2)',
+                },
                 'monitor': {
                     'POST /monitor/start': 'Start traffic monitoring',
                     'POST /monitor/stop': 'Stop traffic monitoring',

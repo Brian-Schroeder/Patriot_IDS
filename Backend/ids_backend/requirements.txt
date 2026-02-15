@@ -11,6 +11,9 @@ requests>=2.31.0
 # AWS (for VPC Flow Logs ingestion)
 boto3>=1.28.0
 
+# MongoDB (for DB1/DB2 pipeline)
+pymongo>=4.6.0
+
 # ML Anomaly Detection
 scikit-learn>=1.3.0
 numpy>=1.24.0

@@ -214,7 +214,68 @@ The attacker generates traffic that will trigger IDS alerts. Use only in a **con
 
 ---
 
-## 5. VPC Flow Logs Setup
+## 5. Notification Center (SMS & Email via AWS)
+
+The Notification Center sends test alerts via **AWS SNS** (SMS) and **AWS SES** (email).
+
+### AWS SES (Email)
+
+1. **Verify a sender email** in [SES Console](https://console.aws.amazon.com/ses/):
+   - Identity → Create identity → Email address
+   - Complete verification (click link in inbox)
+
+2. **Exit sandbox** (optional): In sandbox, you can only send to verified addresses. For production, request production access.
+
+3. **Environment variables:**
+   ```bash
+   export SES_FROM_EMAIL=alerts@yourdomain.com   # Must be verified
+   export AWS_REGION=us-east-1
+   ```
+
+### AWS SNS (SMS)
+
+1. **Enable SMS** in [SNS Console](https://console.aws.amazon.com/sns/). No identity verification needed for SMS.
+
+2. **Environment variables:**
+   ```bash
+   export AWS_REGION=us-east-1
+   ```
+
+3. **Costs:** SMS has per-message charges; check [SNS pricing](https://aws.amazon.com/sns/pricing/).
+
+### Credentials
+
+Use one of:
+- **IAM role** (recommended on EC2/ECS): Attach policy with `ses:SendEmail`, `sns:Publish`
+- **Access keys:**
+  ```bash
+  export AWS_ACCESS_KEY_ID=...
+  export AWS_SECRET_ACCESS_KEY=...
+  ```
+
+### IAM Policy Example
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": ["ses:SendEmail", "ses:SendRawEmail"],
+      "Resource": "*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": ["sns:Publish"],
+      "Resource": "*"
+    }
+  ]
+}
+```
+
+---
+
+## 6. VPC Flow Logs Setup
 
 VPC Flow Logs capture network traffic metadata. The IDS analyzes these records for anomalies (port scans, connection spikes, etc.).
 
@@ -303,7 +364,7 @@ The Lambda must be in the same region as the log group and have permission to be
 
 ---
 
-## 6. Data Flow Summary
+## 7. Data Flow Summary
 
 | Component    | Role |
 |-------------|------|
@@ -315,7 +376,7 @@ The Lambda must be in the same region as the log group and have permission to be
 
 ---
 
-## 7. Quick Test (Without VPC Flow Logs)
+## 8. Quick Test (Without VPC Flow Logs)
 
 To test immediately **without** VPC Flow Logs:
 
@@ -329,7 +390,7 @@ To test immediately **without** VPC Flow Logs:
 
 ---
 
-## 8. Connecting Frontend to Backend
+## 9. Connecting Frontend to Backend
 
 Update the frontend API base URL to your deployed backend:
 
@@ -338,7 +399,7 @@ Update the frontend API base URL to your deployed backend:
 
 ---
 
-## 9. Security Group Checklist
+## 10. Security Group Checklist
 
 | Source       | Target  | Port   | Purpose            |
 |-------------|---------|--------|--------------------|
@@ -350,7 +411,7 @@ Update the frontend API base URL to your deployed backend:
 
 ---
 
-## 10. Troubleshooting
+## 11. Troubleshooting
 
 - **No alerts from Attacker:** Confirm Attacker can reach victim IP; check Backend logs; ensure monitor is started.
 - **Flow Logs not appearing:** Flow logs can take ~5–10 minutes. Check CloudWatch Logs for `/aws/vpc/flow-logs`.

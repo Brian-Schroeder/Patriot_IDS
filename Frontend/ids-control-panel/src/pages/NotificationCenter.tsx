@@ -1,28 +1,12 @@
 import { useState, useEffect } from 'react';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Mail, MessageSquare, Plus, X, Send, Loader2 } from 'lucide-react';
-import { sendTestEmail, sendTestSms } from '../api/notificationApi';
-
-const STORAGE_EMAILS = 'ids-notification-emails';
-const STORAGE_PHONES = 'ids-notification-phones';
-
-function loadEmails(): string[] {
-  try {
-    const saved = localStorage.getItem(STORAGE_EMAILS);
-    return saved ? JSON.parse(saved) : [];
-  } catch {
-    return [];
-  }
-}
-
-function loadPhones(): string[] {
-  try {
-    const saved = localStorage.getItem(STORAGE_PHONES);
-    return saved ? JSON.parse(saved) : [];
-  } catch {
-    return [];
-  }
-}
+import {
+  sendTestEmail,
+  sendTestSms,
+  getNotificationRecipients,
+  saveNotificationRecipients,
+} from '../api/notificationApi';
 
 function isValidEmail(value: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
@@ -34,6 +18,11 @@ function isValidPhone(value: string): boolean {
 }
 
 export function NotificationCenter() {
+  const queryClient = useQueryClient();
+  const { data, isLoading } = useQuery({
+    queryKey: ['notificationRecipients'],
+    queryFn: getNotificationRecipients,
+  });
   const [emails, setEmails] = useState<string[]>([]);
   const [phones, setPhones] = useState<string[]>([]);
   const [emailInput, setEmailInput] = useState('');
@@ -42,20 +31,23 @@ export function NotificationCenter() {
   const [phoneError, setPhoneError] = useState('');
 
   useEffect(() => {
-    setEmails(loadEmails());
-    setPhones(loadPhones());
-  }, []);
+    if (data) {
+      setEmails(data.emails ?? []);
+      setPhones(data.phones ?? []);
+    }
+  }, [data]);
 
-  useEffect(() => {
-    localStorage.setItem(STORAGE_EMAILS, JSON.stringify(emails));
-  }, [emails]);
+  const saveMutation = useMutation({
+    mutationFn: saveNotificationRecipients,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['notificationRecipients'] }),
+  });
 
-  useEffect(() => {
-    localStorage.setItem(STORAGE_PHONES, JSON.stringify(phones));
-  }, [phones]);
+  const persistRecipients = (newEmails: string[], newPhones: string[]) => {
+    saveMutation.mutate({ emails: newEmails, phones: newPhones });
+  };
 
   const addEmail = () => {
-    const trimmed = emailInput.trim();
+    const trimmed = emailInput.trim().toLowerCase();
     setEmailError('');
     if (!trimmed) return;
     if (!isValidEmail(trimmed)) {
@@ -66,12 +58,16 @@ export function NotificationCenter() {
       setEmailError('This email is already added');
       return;
     }
-    setEmails((prev) => [...prev, trimmed]);
+    const newEmails = [...emails, trimmed];
+    setEmails(newEmails);
     setEmailInput('');
+    persistRecipients(newEmails, phones);
   };
 
   const removeEmail = (email: string) => {
-    setEmails((prev) => prev.filter((e) => e !== email));
+    const newEmails = emails.filter((e) => e !== email);
+    setEmails(newEmails);
+    persistRecipients(newEmails, phones);
   };
 
   const addPhone = () => {
@@ -83,17 +79,24 @@ export function NotificationCenter() {
       return;
     }
     const normalized = trimmed.replace(/\D/g, '');
-    const formatted = normalized.length === 10 ? `+1 ${normalized.slice(0, 3)}-${normalized.slice(3, 6)}-${normalized.slice(6)}` : `+${normalized}`;
+    const formatted =
+      normalized.length === 10
+        ? `+1 ${normalized.slice(0, 3)}-${normalized.slice(3, 6)}-${normalized.slice(6)}`
+        : `+${normalized}`;
     if (phones.some((p) => p.replace(/\D/g, '') === normalized)) {
       setPhoneError('This number is already added');
       return;
     }
-    setPhones((prev) => [...prev, formatted]);
+    const newPhones = [...phones, formatted];
+    setPhones(newPhones);
     setPhoneInput('');
+    persistRecipients(emails, newPhones);
   };
 
   const removePhone = (phone: string) => {
-    setPhones((prev) => prev.filter((p) => p !== phone));
+    const newPhones = phones.filter((p) => p !== phone);
+    setPhones(newPhones);
+    persistRecipients(emails, newPhones);
   };
 
   const emailTest = useMutation({
@@ -104,10 +107,19 @@ export function NotificationCenter() {
     mutationFn: (recipients: string[]) => sendTestSms(recipients),
   });
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="w-8 h-8 animate-spin text-[var(--ids-accent)]" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8">
       <p className="text-sm text-[var(--ids-text-muted)]">
-        Add contacts below to receive alerts for critical and high-severity threats.
+        Add contacts below to receive alerts for critical and high-severity threats. Recipients are
+        stored in the backend and used for SNS/SES notifications.
       </p>
 
       <div className="rounded-xl bg-[var(--ids-surface)] border border-[var(--ids-border)] overflow-hidden shadow-sm">

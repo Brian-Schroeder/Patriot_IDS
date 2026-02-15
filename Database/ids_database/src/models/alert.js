@@ -8,15 +8,30 @@ const AlertStatus = {
 };
 
 const AlertSchema = new mongoose.Schema({
-  alert_type: { type: String, required: true },
-  source_ip: { type: String, required: true },
-  destination_ip: { type: String },
-  destination_port: { type: Number },
-  description: { type: String },
-  level: { type: String },
-  status: { type: String, default: AlertStatus.NEW },
-  timestamp: { type: Date, default: Date.now },
+  time: { type: Date, default: Date.now },
+  severity: { type: String, default: 'None' },
+  type: { type: String, default: 'None' },
+  source: { type: String },
+  destination: { type: String },
+  packets: { type: Number, default: 0 },
+  anomaly: { type: Number, default: -1 },
   metadata: { type: mongoose.Schema.Types.Mixed }
+}, {
+  versionKey: false,
+  toJSON: {
+    transform: function(doc, ret) {
+      if (ret && ret.status) delete ret.status;
+      if (ret && ret.__v) delete ret.__v;
+      return ret;
+    }
+  },
+  toObject: {
+    transform: function(doc, ret) {
+      if (ret && ret.status) delete ret.status;
+      if (ret && ret.__v) delete ret.__v;
+      return ret;
+    }
+  }
 });
 
 module.exports = mongoose.model('Alert', AlertSchema);
